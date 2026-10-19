@@ -13,7 +13,7 @@
 #
 # La dirección del backend se puede cambiar sin tocar este archivo: en GitHub,
 # Settings → Secrets and variables → Actions → Variables → API_BASE_URL.
-# Si no existe, se usa la del emulador Android (http://10.0.2.2:8000).
+# Si no existe, se usa la del emulador Android (http://10.0.2.2:8001).
 # (Una variable se puede ver; si fuera una llave de firma, iría en «Secrets».)
 
 name: Release APK
@@ -56,7 +56,7 @@ jobs:
         run: flutter test
 
       - name: Compilar el APK de release
-        run: flutter build apk --release --dart-define=API_BASE_URL=${{ vars.API_BASE_URL || 'http://10.0.2.2:8000' }}
+        run: flutter build apk --release --dart-define=API_BASE_URL=${{ vars.API_BASE_URL || 'http://10.0.2.2:8001' }}
 
       - name: Guardar el APK como artefacto de la ejecución
         uses: actions/upload-artifact@v7
