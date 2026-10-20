@@ -76,7 +76,7 @@ void main() {
     ];
     await abrir(tester);
 
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Asignado'));
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Asignado (1)'));
     await tester.pump();
     expect(find.byType(Card), findsOneWidget);
     expect(find.text('DTSI-2'), findsOneWidget);
@@ -94,5 +94,29 @@ void main() {
     await tester.pump();
     expect(find.byType(Card), findsOneWidget);
     expect(repo.llamadas, ['listarEquipos', 'listarEquipos']);
+  });
+
+  testWidgets('los chips muestran el conteo, también con (0)', (tester) async {
+    repo.equipos = [
+      equipoPrueba(1),
+      equipoPrueba(2, estado: EstadoEquipo.asignado),
+      equipoPrueba(3, estado: EstadoEquipo.asignado),
+    ];
+    // Pantalla ancha para que se construyan todos los chips de la fila.
+    tester.view.physicalSize = const Size(2000, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await abrir(tester);
+
+    expect(find.text('Todos (3)'), findsOneWidget);
+    expect(find.text('Disponible (1)'), findsOneWidget);
+    expect(find.text('Asignado (2)'), findsOneWidget);
+    expect(find.text('Dado de baja (0)'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'DTSI-2');
+    await tester.pump();
+    expect(find.text('Todos (1)'), findsOneWidget);
+    expect(find.text('Disponible (0)'), findsOneWidget);
+    expect(find.text('Asignado (1)'), findsOneWidget);
   });
 }

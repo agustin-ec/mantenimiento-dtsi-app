@@ -109,6 +109,64 @@ void main() {
     expect(controlador.equiposFiltrados, hasLength(3));
   });
 
+  group('conteo por estado', () {
+    setUp(() {
+      repo.equipos = [
+        equipoPrueba(1),
+        equipoPrueba(2, marca: 'HP', estado: EstadoEquipo.asignado),
+        equipoPrueba(3, estado: EstadoEquipo.asignado),
+        equipoPrueba(4, estado: EstadoEquipo.enMantenimiento),
+        equipoPrueba(5, estado: EstadoEquipo.desconocido),
+      ];
+    });
+
+    test('cuenta datos mezclados; desconocido solo suma en el total', () async {
+      await controlador.cargar();
+      final conteo = controlador.conteoPorEstado;
+      expect(controlador.totalCoincidencias, 5);
+      expect(conteo[EstadoEquipo.disponible], 1);
+      expect(conteo[EstadoEquipo.asignado], 2);
+      expect(conteo[EstadoEquipo.enMantenimiento], 1);
+      expect(conteo.containsKey(EstadoEquipo.desconocido), isFalse);
+    });
+
+    test('los estados sin equipos aparecen con 0', () async {
+      await controlador.cargar();
+      final conteo = controlador.conteoPorEstado;
+      expect(conteo[EstadoEquipo.fueraDeServicio], 0);
+      expect(conteo[EstadoEquipo.dadoDeBaja], 0);
+      expect(conteo.keys, EstadoEquipo.filtrables);
+    });
+
+    test('respeta la búsqueda y se recalcula al limpiarla', () async {
+      await controlador.cargar();
+      controlador.buscar('hp');
+      expect(controlador.totalCoincidencias, 1);
+      expect(controlador.conteoPorEstado[EstadoEquipo.asignado], 1);
+      expect(controlador.conteoPorEstado[EstadoEquipo.disponible], 0);
+
+      controlador.limpiarFiltros();
+      expect(controlador.totalCoincidencias, 5);
+      expect(controlador.conteoPorEstado[EstadoEquipo.asignado], 2);
+    });
+
+    test('no depende del filtro de estado seleccionado', () async {
+      await controlador.cargar();
+      controlador.filtrarPorEstado(EstadoEquipo.asignado);
+      expect(controlador.totalCoincidencias, 5);
+      expect(controlador.conteoPorEstado[EstadoEquipo.disponible], 1);
+    });
+
+    test('se actualiza al refrescar', () async {
+      await controlador.cargar();
+      repo.equipos = [equipoPrueba(9, estado: EstadoEquipo.dadoDeBaja)];
+      await controlador.refrescar();
+      expect(controlador.totalCoincidencias, 1);
+      expect(controlador.conteoPorEstado[EstadoEquipo.dadoDeBaja], 1);
+      expect(controlador.conteoPorEstado[EstadoEquipo.asignado], 0);
+    });
+  });
+
   group('limpieza al terminar la sesión', () {
     Future<void> cargarConFiltros() async {
       await controlador.cargar();

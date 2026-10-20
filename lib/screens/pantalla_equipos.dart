@@ -136,6 +136,7 @@ class _FiltrosEstado extends StatelessWidget {
       height: 56,
       child: Obx(() {
         final actual = controlador.filtroEstado.value;
+        final conteo = controlador.conteoPorEstado;
         return ListView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -143,7 +144,7 @@ class _FiltrosEstado extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
-                label: const Text('Todos'),
+                label: Text('Todos (${controlador.totalCoincidencias})'),
                 selected: actual == null,
                 onSelected: (_) => controlador.filtrarPorEstado(null),
               ),
@@ -152,7 +153,7 @@ class _FiltrosEstado extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ChoiceChip(
-                  label: Text(estado.etiqueta),
+                  label: Text('${estado.etiqueta} (${conteo[estado] ?? 0})'),
                   selected: actual == estado,
                   onSelected: (_) => controlador.filtrarPorEstado(estado),
                 ),

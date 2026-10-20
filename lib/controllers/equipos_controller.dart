@@ -33,21 +33,45 @@ class EquiposController extends GetxController {
     });
   }
 
+  /// Equipos que cumplen la búsqueda de texto (sin mirar el filtro de estado).
+  List<Equipo> get _coincidenBusqueda {
+    final texto = normalizarTexto(busqueda.value.trim());
+    if (texto.isEmpty) return equipos.toList();
+    return equipos
+        .where(
+          (e) => [
+            e.codigoInventario,
+            e.marca,
+            e.modelo,
+            e.sede,
+          ].any((campo) => normalizarTexto(campo).contains(texto)),
+        )
+        .toList();
+  }
+
   /// Equipos que cumplen la búsqueda y el filtro de estado.
   List<Equipo> get equiposFiltrados {
-    final texto = normalizarTexto(busqueda.value.trim());
     final filtro = filtroEstado.value;
-    return equipos.where((e) {
-      if (filtro != null && e.estado != filtro) return false;
-      if (texto.isEmpty) return true;
-      return [
-        e.codigoInventario,
-        e.marca,
-        e.modelo,
-        e.sede,
-      ].any((campo) => normalizarTexto(campo).contains(texto));
-    }).toList();
+    final lista = _coincidenBusqueda;
+    if (filtro == null) return lista;
+    return lista.where((e) => e.estado == filtro).toList();
   }
+
+  /// Cuántos equipos da cada chip de estado: respeta la búsqueda, no el filtro
+  /// seleccionado. Incluye todos los estados filtrables, aunque sea con 0.
+  Map<EstadoEquipo, int> get conteoPorEstado {
+    final conteo = {for (final e in EstadoEquipo.filtrables) e: 0};
+    for (final equipo in _coincidenBusqueda) {
+      if (conteo.containsKey(equipo.estado)) {
+        conteo[equipo.estado] = conteo[equipo.estado]! + 1;
+      }
+    }
+    return conteo;
+  }
+
+  /// Total para el chip «Todos»: coincide con la búsqueda, cuenta también los
+  /// estados desconocidos.
+  int get totalCoincidencias => _coincidenBusqueda.length;
 
   bool get hayFiltros =>
       busqueda.value.trim().isNotEmpty || filtroEstado.value != null;
