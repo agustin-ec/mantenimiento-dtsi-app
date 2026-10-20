@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:mantenimiento_dtsi/services/almacen_favoritos.dart';
+import 'package:mantenimiento_dtsi/services/almacen_seguimiento.dart';
 
 import '../utils/hive_temporal.dart';
 
 void main() {
   late Future<void> Function() limpiar;
-  late AlmacenFavoritos almacen;
+  late AlmacenSeguimiento almacen;
 
   setUp(() async {
     limpiar = await iniciarHiveTemporal();
-    almacen = AlmacenFavoritos();
+    almacen = AlmacenSeguimiento();
   });
 
   tearDown(() => limpiar());
@@ -23,7 +23,7 @@ void main() {
     await almacen.guardar(1, {3, 1, 2});
     await Hive.close();
 
-    expect(await AlmacenFavoritos().leer(1), {1, 2, 3});
+    expect(await AlmacenSeguimiento().leer(1), {1, 2, 3});
   });
 
   test('guardar reemplaza lo anterior', () async {
@@ -32,12 +32,20 @@ void main() {
     expect(await almacen.leer(1), {2});
   });
 
-  test('cada persona tiene sus favoritos', () async {
+  test('lee lo guardado antes con el nombre de caja «favoritos»', () async {
+    final caja = await Hive.openBox('favoritos_1');
+    await caja.put('ids', [4, 8]);
+    await Hive.close();
+
+    expect(await AlmacenSeguimiento().leer(1), {4, 8});
+  });
+
+  test('cada persona tiene su propio seguimiento', () async {
     await almacen.guardar(1, {1});
     await almacen.guardar(2, {5, 6});
 
     expect(await almacen.leer(1), {1});
     expect(await almacen.leer(2), {5, 6});
-    expect(AlmacenFavoritos.nombreCaja(2), 'favoritos_2');
+    expect(AlmacenSeguimiento.nombreCaja(2), 'favoritos_2');
   });
 }

@@ -1,14 +1,16 @@
 import 'package:hive/hive.dart';
 
-/// Ids de los equipos favoritos en Hive, una caja por persona.
-class AlmacenFavoritos {
+/// Ids de los equipos seguimiento en Hive, una caja por persona.
+class AlmacenSeguimiento {
   static const _clave = 'ids';
 
   final Future<Box> Function(String nombre) _abrir;
 
-  AlmacenFavoritos({Future<Box> Function(String nombre)? abrirCaja})
+  AlmacenSeguimiento({Future<Box> Function(String nombre)? abrirCaja})
     : _abrir = abrirCaja ?? ((nombre) => Hive.openBox(nombre));
 
+  /// El nombre conserva «favoritos» para leer lo que ya se guardó con ese
+  /// nombre antes del cambio a «Mis equipos».
   static String nombreCaja(int usuarioId) => 'favoritos_$usuarioId';
 
   Future<Set<int>> leer(int usuarioId) async {

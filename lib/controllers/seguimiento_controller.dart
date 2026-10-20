@@ -1,13 +1,13 @@
 import 'package:get/get.dart';
 
-import '../services/almacen_favoritos.dart';
+import '../services/almacen_seguimiento.dart';
 import '../utils/sesion.dart';
 import 'auth_controller.dart';
 
-/// Favoritos de la persona con sesión. Al iniciar sesión se leen del disco; al
+/// Equipos que la persona sigue («Mis equipos»). Al iniciar sesión se leen del disco; al
 /// terminar solo se vacía la memoria, así que vuelven al entrar de nuevo.
-class FavoritosController extends GetxController {
-  final AlmacenFavoritos _almacen;
+class SeguimientoController extends GetxController {
+  final AlmacenSeguimiento _almacen;
   final AuthController _auth;
 
   final ids = <int>{}.obs;
@@ -16,7 +16,7 @@ class FavoritosController extends GetxController {
   /// Cambia al limpiar: una lectura que llega después se descarta.
   int _generacion = 0;
 
-  FavoritosController(this._almacen, this._auth);
+  SeguimientoController(this._almacen, this._auth);
 
   @override
   void onInit() {
@@ -25,10 +25,10 @@ class FavoritosController extends GetxController {
     if (_auth.estado.value == EstadoAuth.conSesion) cargar();
   }
 
-  bool esFavorito(int equipoId) => ids.contains(equipoId);
+  bool estaSiguiendo(int equipoId) => ids.contains(equipoId);
 
   /// Lectura en curso; [alternar] la espera para no guardar una memoria
-  /// incompleta encima de los favoritos del disco.
+  /// incompleta encima de lo guardado en el disco.
   Future<void>? _carga;
 
   Future<void> cargar() => _carga = _leer();
@@ -43,7 +43,7 @@ class FavoritosController extends GetxController {
       ids.assignAll(guardados);
     } catch (_) {
       if (generacion != _generacion) return;
-      mensaje.value = 'No se pudieron leer tus favoritos.';
+      mensaje.value = 'No se pudo leer tu seguimiento.';
     }
   }
 
@@ -54,8 +54,8 @@ class FavoritosController extends GetxController {
     final usuarioId = _auth.usuario.value?.id;
     if (usuarioId == null) return;
     mensaje.value = null;
-    final eraFavorito = ids.contains(equipoId);
-    if (eraFavorito) {
+    final eraSeguido = ids.contains(equipoId);
+    if (eraSeguido) {
       ids.remove(equipoId);
     } else {
       ids.add(equipoId);
@@ -63,12 +63,12 @@ class FavoritosController extends GetxController {
     try {
       await _almacen.guardar(usuarioId, ids.toSet());
     } catch (_) {
-      if (eraFavorito) {
+      if (eraSeguido) {
         ids.add(equipoId);
       } else {
         ids.remove(equipoId);
       }
-      mensaje.value = 'No se pudo guardar el favorito.';
+      mensaje.value = 'No se pudo guardar el seguimiento.';
     }
   }
 

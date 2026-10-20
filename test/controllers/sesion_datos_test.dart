@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mantenimiento_dtsi/controllers/auth_controller.dart';
 import 'package:mantenimiento_dtsi/controllers/equipos_controller.dart';
-import 'package:mantenimiento_dtsi/controllers/favoritos_controller.dart';
+import 'package:mantenimiento_dtsi/controllers/seguimiento_controller.dart';
 import 'package:mantenimiento_dtsi/repositories/equipo_repository.dart';
-import 'package:mantenimiento_dtsi/services/almacen_favoritos.dart';
+import 'package:mantenimiento_dtsi/services/almacen_seguimiento.dart';
 import 'package:mantenimiento_dtsi/services/almacen_token.dart';
 import 'package:mantenimiento_dtsi/services/api_client.dart';
 import 'package:mantenimiento_dtsi/services/cache_equipos.dart';
@@ -17,22 +17,22 @@ import '../utils/repositorio_equipos_falso.dart';
 import '../utils/repositorio_falso.dart';
 
 /// Recorrido completo con Hive real: lo que se limpia al terminar la sesión es
-/// la memoria; la caché y los favoritos siguen en disco.
+/// la memoria; la caché y el seguimiento siguen en disco.
 void main() {
   late Future<void> Function() limpiar;
   late bool hayRed;
   late AuthController auth;
   late EquiposController equipos;
-  late FavoritosController favoritos;
+  late SeguimientoController seguimiento;
   late CacheEquipos cache;
-  late AlmacenFavoritos almacen;
+  late AlmacenSeguimiento almacen;
 
   setUp(() async {
     limpiar = await iniciarHiveTemporal();
     FlutterSecureStorage.setMockInitialValues({});
     hayRed = true;
     cache = CacheEquipos();
-    almacen = AlmacenFavoritos();
+    almacen = AlmacenSeguimiento();
 
     final cliente = ApiClient(almacen: AlmacenToken());
     cliente.dio.httpClientAdapter = AdaptadorFalso((o) async {
@@ -52,7 +52,7 @@ void main() {
       idUsuario: () => auth.usuario.value?.id,
     );
     equipos = Get.put(EquiposController(repo, auth));
-    favoritos = Get.put(FavoritosController(almacen, auth));
+    seguimiento = Get.put(SeguimientoController(almacen, auth));
   });
 
   tearDown(() async {
@@ -66,33 +66,33 @@ void main() {
   test('al terminar la sesión, memoria limpia y disco intacto', () async {
     await auth.iniciarSesion('ana@utb.edu.ec', 'clave1234');
     await equipos.cargar();
-    await favoritos.alternar(2);
+    await seguimiento.alternar(2);
 
     await auth.cerrarSesion();
     expect(equipos.equipos, isEmpty);
-    expect(favoritos.ids, isEmpty);
+    expect(seguimiento.ids, isEmpty);
     expect((await cache.leer(usuarioPrueba.id))?.equipos, hasLength(2));
     expect(await almacen.leer(usuarioPrueba.id), {2});
 
-    // Al volver a entrar sin red: favoritos y equipos desde el disco.
+    // Al volver a entrar sin red: seguimiento y equipos vienen del disco.
     hayRed = false;
     await auth.iniciarSesion('ana@utb.edu.ec', 'clave1234');
     await esperar();
     await equipos.cargar();
-    expect(favoritos.ids, {2});
+    expect(seguimiento.ids, {2});
     expect(equipos.cacheDesde.value, isNotNull);
-    expect(equipos.porIds(favoritos.ids.toSet()).single.id, 2);
+    expect(equipos.porIds(seguimiento.ids.toSet()).single.id, 2);
   });
 
   test('la caducidad por 401 tampoco borra el disco', () async {
     await auth.iniciarSesion('ana@utb.edu.ec', 'clave1234');
     await equipos.cargar();
-    await favoritos.alternar(1);
+    await seguimiento.alternar(1);
 
     auth.alCaducarSesion();
     expect(equipos.equipos, isEmpty);
     expect(equipos.cacheDesde.value, isNull);
-    expect(favoritos.ids, isEmpty);
+    expect(seguimiento.ids, isEmpty);
     expect(await cache.leer(usuarioPrueba.id), isNotNull);
     expect(await almacen.leer(usuarioPrueba.id), {1});
   });

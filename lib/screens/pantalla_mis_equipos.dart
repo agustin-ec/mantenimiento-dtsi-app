@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/equipos_controller.dart';
-import '../controllers/favoritos_controller.dart';
+import '../controllers/seguimiento_controller.dart';
 import '../widgets/aviso_cache.dart';
 import '../widgets/tarjeta_equipo.dart';
 import '../widgets/vista_error.dart';
 import '../widgets/vista_vacia.dart';
 
-/// Equipos marcados con la estrella. Usa la lista de [EquiposController], así
+/// Equipos que la persona sigue. Usa la lista de [EquiposController], así
 /// que también funciona con datos de la caché.
-class PantallaFavoritos extends StatelessWidget {
-  const PantallaFavoritos({super.key});
+class PantallaMisEquipos extends StatelessWidget {
+  const PantallaMisEquipos({super.key});
 
   @override
   Widget build(BuildContext context) {
     final equipos = Get.find<EquiposController>();
-    final favoritos = Get.find<FavoritosController>();
+    final seguimiento = Get.find<SeguimientoController>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Favoritos')),
+      appBar: AppBar(title: const Text('Mis equipos')),
       body: Column(
         children: [
           Obx(() {
@@ -38,7 +38,7 @@ class PantallaFavoritos extends StatelessWidget {
                   );
                 case EstadoEquipos.vacio:
                 case EstadoEquipos.exito:
-                  return _lista(equipos, favoritos);
+                  return _lista(equipos, seguimiento);
               }
             }),
           ),
@@ -47,23 +47,24 @@ class PantallaFavoritos extends StatelessWidget {
     );
   }
 
-  Widget _lista(EquiposController equipos, FavoritosController favoritos) {
-    final ids = favoritos.ids.toSet();
+  Widget _lista(EquiposController equipos, SeguimientoController seguimiento) {
+    final ids = seguimiento.ids.toSet();
     final lista = equipos.porIds(ids);
     if (lista.isEmpty) {
       // Con ids guardados que ya no están en la lista, el mensaje no debe
-      // decir que no hay favoritos.
+      // decir que no sigue ninguno.
       return RefreshIndicator(
         onRefresh: equipos.refrescar,
         child: ids.isEmpty
             ? const VistaVacia(
-                icono: Icons.star_border,
-                titulo: 'Aún no tienes favoritos',
-                mensaje: 'Marca equipos con la estrella.',
+                icono: Icons.bookmark_border,
+                titulo: 'Aún no sigues ningún equipo',
+                mensaje: 'Toca el marcador en los equipos que atiendes.',
               )
             : const VistaVacia(
-                icono: Icons.star_border,
-                titulo: 'Tus favoritos no están en la lista actual',
+                icono: Icons.bookmark_border,
+                titulo:
+                    'Tus equipos en seguimiento no están en la lista actual',
                 mensaje: 'Volverán a aparecer si el equipo regresa.',
               ),
       );

@@ -1,7 +1,7 @@
-import 'package:mantenimiento_dtsi/services/almacen_favoritos.dart';
+import 'package:mantenimiento_dtsi/services/almacen_seguimiento.dart';
 
-/// Favoritos en memoria, por persona, para pruebas de widget (sin disco).
-class AlmacenFavoritosFalso implements AlmacenFavoritos {
+/// Seguimiento en memoria, por persona, para pruebas de widget (sin disco).
+class AlmacenSeguimientoFalso implements AlmacenSeguimiento {
   final Map<int, Set<int>> datos = {};
   bool fallaAlGuardar = false;
 

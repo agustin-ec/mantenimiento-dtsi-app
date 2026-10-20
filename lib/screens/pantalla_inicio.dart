@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
 import 'pantalla_equipos.dart';
-import 'pantalla_favoritos.dart';
+import 'pantalla_mis_equipos.dart';
 import 'pantalla_perfil.dart';
 
-/// Pantalla protegida con la barra inferior «Equipos», «Favoritos» y «Perfil».
+/// Pantalla protegida con la barra inferior «Equipos», «Mis equipos» y «Perfil».
 class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
 
@@ -22,7 +22,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
         index: _indice,
         children: const [
           PantallaEquipos(),
-          PantallaFavoritos(),
+          PantallaMisEquipos(),
           PantallaPerfil(),
         ],
       ),
@@ -36,9 +36,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
             label: 'Equipos',
           ),
           NavigationDestination(
-            icon: Icon(Icons.star_border),
-            selectedIcon: Icon(Icons.star),
-            label: 'Favoritos',
+            icon: Icon(Icons.bookmark_border),
+            selectedIcon: Icon(Icons.bookmark),
+            label: 'Mis equipos',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

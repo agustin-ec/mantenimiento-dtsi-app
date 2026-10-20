@@ -6,7 +6,7 @@ import '../models/equipo.dart';
 import '../models/evento_historial.dart';
 import '../repositories/equipo_repository.dart';
 import '../utils/texto.dart';
-import '../widgets/boton_favorito.dart';
+import '../widgets/boton_seguimiento.dart';
 import '../widgets/indicador_estado.dart';
 import '../widgets/vista_error.dart';
 import '../widgets/vista_vacia.dart';
@@ -61,7 +61,7 @@ class _PantallaDetalleEquipoState extends State<PantallaDetalleEquipo> {
     return Scaffold(
       appBar: AppBar(
         title: Text(equipo.codigoInventario),
-        actions: [BotonFavorito(equipoId: equipo.id)],
+        actions: [BotonSeguimiento(equipoId: equipo.id)],
       ),
       body: RefreshIndicator(
         onRefresh: controlador.cargar,

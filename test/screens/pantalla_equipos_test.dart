@@ -3,25 +3,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mantenimiento_dtsi/controllers/auth_controller.dart';
 import 'package:mantenimiento_dtsi/controllers/equipos_controller.dart';
-import 'package:mantenimiento_dtsi/controllers/favoritos_controller.dart';
+import 'package:mantenimiento_dtsi/controllers/seguimiento_controller.dart';
 import 'package:mantenimiento_dtsi/models/equipo.dart';
 import 'package:mantenimiento_dtsi/screens/pantalla_equipos.dart';
 import 'package:mantenimiento_dtsi/services/api_exception.dart';
 import 'package:mantenimiento_dtsi/theme/tema_app.dart';
 
-import '../utils/almacen_favoritos_falso.dart';
+import '../utils/almacen_seguimiento_falso.dart';
 import '../utils/repositorio_equipos_falso.dart';
 import '../utils/repositorio_falso.dart';
 
 void main() {
   late RepositorioEquiposFalso repo;
-  late AlmacenFavoritosFalso almacen;
+  late AlmacenSeguimientoFalso almacen;
 
   Future<void> abrir(WidgetTester tester) async {
     final auth = Get.put(AuthController(RepositorioFalso(), navegar: (_) {}));
     auth.usuario.value = usuarioPrueba;
     Get.put(EquiposController(repo, auth));
-    Get.put(FavoritosController(almacen, auth));
+    Get.put(SeguimientoController(almacen, auth));
     await tester.pumpWidget(
       GetMaterialApp(theme: TemaApp.claro, home: const PantallaEquipos()),
     );
@@ -31,7 +31,7 @@ void main() {
 
   setUp(() {
     repo = RepositorioEquiposFalso();
-    almacen = AlmacenFavoritosFalso();
+    almacen = AlmacenSeguimientoFalso();
   });
   tearDown(Get.reset);
 
@@ -128,21 +128,21 @@ void main() {
     expect(find.text('Asignado (1)'), findsOneWidget);
   });
 
-  testWidgets('la estrella marca y desmarca un favorito', (tester) async {
+  testWidgets('el marcador sigue y deja de seguir un equipo', (tester) async {
     repo.equipos = [equipoPrueba(1)];
     await abrir(tester);
 
-    expect(find.byIcon(Icons.star_border), findsOneWidget);
-    await tester.tap(find.byTooltip('Marcar como favorito'));
+    expect(find.byIcon(Icons.bookmark_border), findsOneWidget);
+    await tester.tap(find.byTooltip('Seguir equipo'));
     await tester.pump();
     await tester.pump();
-    expect(find.byIcon(Icons.star), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark), findsOneWidget);
     expect(almacen.datos[usuarioPrueba.id], {1});
 
-    await tester.tap(find.byTooltip('Quitar de favoritos'));
+    await tester.tap(find.byTooltip('Dejar de seguir'));
     await tester.pump();
     await tester.pump();
-    expect(find.byIcon(Icons.star_border), findsOneWidget);
+    expect(find.byIcon(Icons.bookmark_border), findsOneWidget);
     expect(almacen.datos[usuarioPrueba.id], isEmpty);
   });
 

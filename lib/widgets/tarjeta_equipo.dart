@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 
 import '../models/equipo.dart';
 import '../utils/rutas.dart';
-import 'boton_favorito.dart';
+import 'boton_seguimiento.dart';
 import 'indicador_estado.dart';
 
-/// Tarjeta de un equipo: abre el detalle y permite marcarlo como favorito.
+/// Tarjeta de un equipo: abre el detalle y permite seguirlo.
 class TarjetaEquipo extends StatelessWidget {
   final Equipo equipo;
 
@@ -47,7 +47,7 @@ class TarjetaEquipo extends StatelessWidget {
                   ),
                 ),
               ),
-              BotonFavorito(equipoId: equipo.id),
+              BotonSeguimiento(equipoId: equipo.id),
             ],
           ),
         ),
