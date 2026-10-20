@@ -1,44 +1,41 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-import '../controllers/auth_controller.dart';
+import 'pantalla_equipos.dart';
+import 'pantalla_perfil.dart';
 
-/// Pantalla protegida provisional; luego será la lista de equipos.
-class PantallaInicio extends StatelessWidget {
+/// Pantalla protegida con la barra inferior «Equipos» y «Perfil».
+class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
 
   @override
+  State<PantallaInicio> createState() => _PantallaInicioState();
+}
+
+class _PantallaInicioState extends State<PantallaInicio> {
+  int _indice = 0;
+
+  @override
   Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
-    final tema = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Mantenimiento DTSI')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Obx(() {
-            final usuario = auth.usuario.value;
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  usuario?.nombreCompleto ?? '',
-                  style: tema.textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  usuario?.rolLegible ?? '',
-                  style: tema.textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 24),
-                OutlinedButton(
-                  onPressed: auth.cerrarSesion,
-                  child: const Text('Cerrar sesión'),
-                ),
-              ],
-            );
-          }),
-        ),
+      body: IndexedStack(
+        index: _indice,
+        children: const [PantallaEquipos(), PantallaPerfil()],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _indice,
+        onDestinationSelected: (i) => setState(() => _indice = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.precision_manufacturing_outlined),
+            selectedIcon: Icon(Icons.precision_manufacturing),
+            label: 'Equipos',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
+        ],
       ),
     );
   }

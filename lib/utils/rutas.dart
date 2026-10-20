@@ -3,4 +3,5 @@ class Rutas {
   static const login = '/login';
   static const registro = '/registro';
   static const inicio = '/inicio';
+  static const detalleEquipo = '/equipos/detalle';
 }

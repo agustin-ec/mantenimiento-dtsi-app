@@ -3,9 +3,12 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'controllers/auth_controller.dart';
+import 'controllers/equipos_controller.dart';
 import 'controllers/tema_controller.dart';
 import 'repositories/auth_repository.dart';
+import 'repositories/equipo_repository.dart';
 import 'screens/pantalla_arranque.dart';
+import 'screens/pantalla_detalle_equipo.dart';
 import 'screens/pantalla_inicio.dart';
 import 'screens/pantalla_login.dart';
 import 'screens/pantalla_registro.dart';
@@ -24,6 +27,9 @@ Future<void> main() async {
   final cliente = ApiClient(almacen: AlmacenToken());
   final auth = Get.put(AuthController(AuthRepository(cliente)));
   cliente.alCaducarSesion = auth.alCaducarSesion;
+
+  final equipos = Get.put<EquipoRepository>(EquipoRepository(cliente));
+  Get.put(EquiposController(equipos, auth));
 
   runApp(AplicacionDtsi(modoInicial: temaController.modo.value));
 }
@@ -56,6 +62,11 @@ class AplicacionDtsi extends StatelessWidget {
         GetPage(
           name: Rutas.inicio,
           page: () => const PantallaInicio(),
+          middlewares: [MiddlewareAuth(requiereSesion: true)],
+        ),
+        GetPage(
+          name: Rutas.detalleEquipo,
+          page: () => const PantallaDetalleEquipo(),
           middlewares: [MiddlewareAuth(requiereSesion: true)],
         ),
       ],

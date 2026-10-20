@@ -1,0 +1,98 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:mantenimiento_dtsi/controllers/auth_controller.dart';
+import 'package:mantenimiento_dtsi/controllers/equipos_controller.dart';
+import 'package:mantenimiento_dtsi/models/equipo.dart';
+import 'package:mantenimiento_dtsi/screens/pantalla_equipos.dart';
+import 'package:mantenimiento_dtsi/services/api_exception.dart';
+import 'package:mantenimiento_dtsi/theme/tema_app.dart';
+
+import '../utils/repositorio_equipos_falso.dart';
+import '../utils/repositorio_falso.dart';
+
+void main() {
+  late RepositorioEquiposFalso repo;
+
+  Future<void> abrir(WidgetTester tester) async {
+    final auth = Get.put(AuthController(RepositorioFalso(), navegar: (_) {}));
+    Get.put(EquiposController(repo, auth));
+    await tester.pumpWidget(
+      GetMaterialApp(theme: TemaApp.claro, home: const PantallaEquipos()),
+    );
+    await tester.pump();
+    await tester.pump();
+  }
+
+  setUp(() => repo = RepositorioEquiposFalso());
+  tearDown(Get.reset);
+
+  testWidgets('muestra una tarjeta por equipo con sus datos', (tester) async {
+    repo.equipos = [
+      equipoPrueba(1),
+      equipoPrueba(
+        2,
+        marca: 'HP',
+        modelo: 'ProBook',
+        sede: 'Norte',
+        estado: EstadoEquipo.fueraDeServicio,
+      ),
+    ];
+    await abrir(tester);
+
+    expect(find.byType(Card), findsNWidgets(2));
+    expect(find.text('DTSI-1'), findsOneWidget);
+    expect(find.text('HP ProBook'), findsOneWidget);
+    expect(find.text('Norte'), findsOneWidget);
+    expect(find.text('Fuera de servicio'), findsWidgets);
+  });
+
+  testWidgets('sin equipos muestra el estado vacío', (tester) async {
+    await abrir(tester);
+    expect(find.text('Aún no hay equipos registrados'), findsOneWidget);
+    expect(find.byType(Card), findsNothing);
+  });
+
+  testWidgets('una búsqueda sin resultados muestra otro mensaje y limpia', (
+    tester,
+  ) async {
+    repo.equipos = [equipoPrueba(1)];
+    await abrir(tester);
+
+    await tester.enterText(find.byType(TextField), 'zzz');
+    await tester.pump();
+    expect(find.text('Ningún equipo coincide'), findsOneWidget);
+    expect(find.text('Aún no hay equipos registrados'), findsNothing);
+
+    await tester.tap(find.text('Limpiar filtros'));
+    await tester.pump();
+    expect(find.byType(Card), findsOneWidget);
+  });
+
+  testWidgets('el chip de estado filtra la lista', (tester) async {
+    repo.equipos = [
+      equipoPrueba(1),
+      equipoPrueba(2, estado: EstadoEquipo.asignado),
+    ];
+    await abrir(tester);
+
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Asignado'));
+    await tester.pump();
+    expect(find.byType(Card), findsOneWidget);
+    expect(find.text('DTSI-2'), findsOneWidget);
+  });
+
+  testWidgets('el error muestra «Reintentar» y recarga', (tester) async {
+    repo.error = const ApiException(ApiException.mensajeSinConexion);
+    await abrir(tester);
+    expect(find.text(ApiException.mensajeSinConexion), findsOneWidget);
+
+    repo.error = null;
+    repo.equipos = [equipoPrueba(1)];
+    await tester.tap(find.widgetWithText(FilledButton, 'Reintentar'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(Card), findsOneWidget);
+    expect(repo.llamadas, ['listarEquipos', 'listarEquipos']);
+  });
+}
