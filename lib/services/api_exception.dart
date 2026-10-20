@@ -63,13 +63,14 @@ class ApiException implements Exception {
     if (codigo >= 500) {
       return ApiException(mensajeServidor, codigoEstado: codigo);
     }
-    if (codigo == 400 || codigo == 403 || codigo == 404) {
+    if (codigo == 400 || codigo == 403 || codigo == 404 || codigo == 409) {
       if (detalle is String && detalle.trim().isNotEmpty) {
         return ApiException(detalle, codigoEstado: codigo);
       }
       final porDefecto = switch (codigo) {
         403 => 'No tienes permiso para realizar esta acción.',
         404 => 'No se encontró lo que buscabas.',
+        409 => 'Ya existe un registro con esos datos.',
         _ => 'La solicitud no es válida.',
       };
       return ApiException(porDefecto, codigoEstado: codigo);

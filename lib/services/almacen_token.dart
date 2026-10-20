@@ -7,7 +7,7 @@ class AlmacenToken {
   final FlutterSecureStorage _almacen;
 
   AlmacenToken({FlutterSecureStorage? almacen})
-      : _almacen = almacen ?? const FlutterSecureStorage();
+    : _almacen = almacen ?? const FlutterSecureStorage();
 
   Future<String?> leer() => _almacen.read(key: _clave);
 

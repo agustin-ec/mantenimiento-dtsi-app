@@ -17,19 +17,16 @@ class ApiClient {
   /// Se invoca cuando una petición con token recibe 401.
   void Function()? alCaducarSesion;
 
-  ApiClient({
-    required this.almacen,
-    this.alCaducarSesion,
-    Dio? dio,
-  }) : dio = dio ?? Dio() {
+  ApiClient({required this.almacen, this.alCaducarSesion, Dio? dio})
+    : dio = dio ?? Dio() {
     this.dio.options
       ..baseUrl = urlBase
       ..connectTimeout = const Duration(seconds: 15)
       ..receiveTimeout = const Duration(seconds: 15)
       ..sendTimeout = const Duration(seconds: 15);
     this.dio.interceptors.add(
-          InterceptorsWrapper(onRequest: _alEnviar, onError: _alFallar),
-        );
+      InterceptorsWrapper(onRequest: _alEnviar, onError: _alFallar),
+    );
   }
 
   Future<void> _alEnviar(

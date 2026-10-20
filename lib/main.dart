@@ -2,19 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'controllers/auth_controller.dart';
 import 'controllers/tema_controller.dart';
-import 'screens/pantalla_inicial.dart';
+import 'repositories/auth_repository.dart';
+import 'screens/pantalla_arranque.dart';
+import 'screens/pantalla_inicio.dart';
+import 'screens/pantalla_login.dart';
+import 'screens/pantalla_registro.dart';
+import 'services/almacen_token.dart';
+import 'services/api_client.dart';
 import 'theme/tema_app.dart';
-
-class Rutas {
-  static const inicio = '/';
-}
+import 'utils/middleware_auth.dart';
+import 'utils/rutas.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   final caja = await Hive.openBox(TemaController.nombreCaja);
   final temaController = Get.put(TemaController(caja));
+
+  final cliente = ApiClient(almacen: AlmacenToken());
+  final auth = Get.put(AuthController(AuthRepository(cliente)));
+  cliente.alCaducarSesion = auth.alCaducarSesion;
 
   runApp(AplicacionDtsi(modoInicial: temaController.modo.value));
 }
@@ -31,9 +40,24 @@ class AplicacionDtsi extends StatelessWidget {
       theme: TemaApp.claro,
       darkTheme: TemaApp.oscuro,
       themeMode: modoInicial,
-      initialRoute: Rutas.inicio,
+      initialRoute: Rutas.arranque,
       getPages: [
-        GetPage(name: Rutas.inicio, page: () => const PantallaInicial()),
+        GetPage(name: Rutas.arranque, page: () => const PantallaArranque()),
+        GetPage(
+          name: Rutas.login,
+          page: () => const PantallaLogin(),
+          middlewares: [MiddlewareAuth(requiereSesion: false)],
+        ),
+        GetPage(
+          name: Rutas.registro,
+          page: () => const PantallaRegistro(),
+          middlewares: [MiddlewareAuth(requiereSesion: false)],
+        ),
+        GetPage(
+          name: Rutas.inicio,
+          page: () => const PantallaInicio(),
+          middlewares: [MiddlewareAuth(requiereSesion: true)],
+        ),
       ],
     );
   }

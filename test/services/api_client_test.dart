@@ -1,6 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,34 +5,7 @@ import 'package:mantenimiento_dtsi/services/almacen_token.dart';
 import 'package:mantenimiento_dtsi/services/api_client.dart';
 import 'package:mantenimiento_dtsi/services/api_exception.dart';
 
-/// Adaptador falso: responde según el [manejador] y guarda las peticiones.
-class AdaptadorFalso implements HttpClientAdapter {
-  final Future<ResponseBody> Function(RequestOptions) manejador;
-  final List<RequestOptions> peticiones = [];
-
-  AdaptadorFalso(this.manejador);
-
-  @override
-  Future<ResponseBody> fetch(
-    RequestOptions opciones,
-    Stream<Uint8List>? cuerpo,
-    Future<void>? cancelar,
-  ) {
-    peticiones.add(opciones);
-    return manejador(opciones);
-  }
-
-  @override
-  void close({bool force = false}) {}
-}
-
-ResponseBody json(int codigo, Object cuerpo) => ResponseBody.fromString(
-      jsonEncode(cuerpo),
-      codigo,
-      headers: {
-        Headers.contentTypeHeader: ['application/json'],
-      },
-    );
+import '../utils/adaptador_falso.dart';
 
 void main() {
   late AlmacenToken almacen;
@@ -80,15 +50,19 @@ void main() {
       await almacen.guardar('abc');
       final adaptador = AdaptadorFalso((_) async => json(200, {}));
       await crear(adaptador).dio.get('/x');
-      expect(adaptador.peticiones.single.headers['Authorization'],
-          'Bearer abc');
+      expect(
+        adaptador.peticiones.single.headers['Authorization'],
+        'Bearer abc',
+      );
     });
 
     test('no añade Authorization sin token', () async {
       final adaptador = AdaptadorFalso((_) async => json(200, {}));
       await crear(adaptador).dio.get('/x');
-      expect(adaptador.peticiones.single.headers.containsKey('Authorization'),
-          isFalse);
+      expect(
+        adaptador.peticiones.single.headers.containsKey('Authorization'),
+        isFalse,
+      );
     });
   });
 
@@ -104,22 +78,24 @@ void main() {
       expect(caducadas, 1);
     });
 
-    test('sin token: credenciales incorrectas, sin aviso de caducidad',
-        () async {
-      final cliente = crear(
-        AdaptadorFalso((_) async => json(401, {'detail': 'x'})),
-      );
-      final e = await fallo(cliente);
-      expect(e.mensaje, 'Correo o contraseña incorrectos');
-      expect(caducadas, 0);
-    });
+    test(
+      'sin token: credenciales incorrectas, sin aviso de caducidad',
+      () async {
+        final cliente = crear(
+          AdaptadorFalso((_) async => json(401, {'detail': 'x'})),
+        );
+        final e = await fallo(cliente);
+        expect(e.mensaje, 'Correo o contraseña incorrectos');
+        expect(caducadas, 0);
+      },
+    );
   });
 
   group('mapeo de errores', () {
     Future<ApiException> conRespuesta(int codigo, Object cuerpo) =>
         fallo(crear(AdaptadorFalso((_) async => json(codigo, cuerpo))));
 
-    for (final codigo in [400, 403, 404]) {
+    for (final codigo in [400, 403, 404, 409]) {
       test('$codigo usa el texto de detail', () async {
         final e = await conRespuesta(codigo, {'detail': 'Texto del servidor'});
         expect(e.mensaje, 'Texto del servidor');
@@ -138,12 +114,12 @@ void main() {
           {
             'loc': ['body', 'email'],
             'msg': 'valor no válido',
-            'type': 'value_error'
+            'type': 'value_error',
           },
           {
             'loc': ['body', 'password'],
             'msg': 'muy corta',
-            'type': 'value_error'
+            'type': 'value_error',
           },
         ],
       });
@@ -156,7 +132,7 @@ void main() {
           {
             'loc': ['query', 'limite'],
             'msg': 'm',
-            'type': 't'
+            'type': 't',
           },
         ],
       });
@@ -169,19 +145,29 @@ void main() {
     });
 
     test('tiempo agotado', () async {
-      final cliente = crear(AdaptadorFalso((o) async => throw DioException(
+      final cliente = crear(
+        AdaptadorFalso(
+          (o) async => throw DioException(
             requestOptions: o,
             type: DioExceptionType.receiveTimeout,
-          )));
-      expect((await fallo(cliente)).mensaje,
-          'Se agotó el tiempo de espera. Inténtalo de nuevo.');
+          ),
+        ),
+      );
+      expect(
+        (await fallo(cliente)).mensaje,
+        'Se agotó el tiempo de espera. Inténtalo de nuevo.',
+      );
     });
 
     test('sin conexión', () async {
-      final cliente = crear(AdaptadorFalso((o) async => throw DioException(
+      final cliente = crear(
+        AdaptadorFalso(
+          (o) async => throw DioException(
             requestOptions: o,
             type: DioExceptionType.connectionError,
-          )));
+          ),
+        ),
+      );
       final e = await fallo(cliente);
       expect(e.mensaje, 'Sin conexión. Revisa tu red e inténtalo de nuevo.');
       expect(e.mensaje.contains('Dio'), isFalse);
