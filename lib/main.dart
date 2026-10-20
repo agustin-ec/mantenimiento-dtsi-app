@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/equipos_controller.dart';
+import 'controllers/favoritos_controller.dart';
 import 'controllers/tema_controller.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/equipo_repository.dart';
@@ -13,7 +14,9 @@ import 'screens/pantalla_inicio.dart';
 import 'screens/pantalla_login.dart';
 import 'screens/pantalla_registro.dart';
 import 'services/almacen_token.dart';
+import 'services/almacen_favoritos.dart';
 import 'services/api_client.dart';
+import 'services/cache_equipos.dart';
 import 'theme/tema_app.dart';
 import 'utils/middleware_auth.dart';
 import 'utils/rutas.dart';
@@ -28,8 +31,15 @@ Future<void> main() async {
   final auth = Get.put(AuthController(AuthRepository(cliente)));
   cliente.alCaducarSesion = auth.alCaducarSesion;
 
-  final equipos = Get.put<EquipoRepository>(EquipoRepository(cliente));
+  final equipos = Get.put<EquipoRepository>(
+    EquipoRepository(
+      cliente,
+      cache: CacheEquipos(),
+      idUsuario: () => auth.usuario.value?.id,
+    ),
+  );
   Get.put(EquiposController(equipos, auth));
+  Get.put(FavoritosController(AlmacenFavoritos(), auth));
 
   runApp(AplicacionDtsi(modoInicial: temaController.modo.value));
 }

@@ -109,6 +109,28 @@ void main() {
     expect(controlador.equiposFiltrados, hasLength(3));
   });
 
+  test(
+    'marca los datos que vienen de la caché y lo quita con datos frescos',
+    () async {
+      final fecha = DateTime(2026, 10, 20, 14, 5);
+      repo.desdeCache = fecha;
+      await controlador.cargar();
+      expect(controlador.estado.value, EstadoEquipos.exito);
+      expect(controlador.cacheDesde.value, fecha);
+
+      repo.desdeCache = null;
+      await controlador.refrescar();
+      expect(controlador.cacheDesde.value, isNull);
+    },
+  );
+
+  test('al terminar la sesión también se olvida el aviso de caché', () async {
+    repo.desdeCache = DateTime(2026, 10, 20);
+    await controlador.cargar();
+    await auth.cerrarSesion();
+    expect(controlador.cacheDesde.value, isNull);
+  });
+
   group('conteo por estado', () {
     setUp(() {
       repo.equipos = [

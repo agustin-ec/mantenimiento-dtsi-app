@@ -4,6 +4,7 @@ import '../models/equipo.dart';
 import '../repositories/equipo_repository.dart';
 import '../services/api_exception.dart';
 import '../utils/texto.dart';
+import '../utils/sesion.dart';
 import 'auth_controller.dart';
 
 enum EstadoEquipos { cargando, exito, vacio, error }
@@ -20,6 +21,10 @@ class EquiposController extends GetxController {
   final Rxn<EstadoEquipo> filtroEstado = Rxn<EstadoEquipo>();
   final RxnString mensaje = RxnString();
 
+  /// Fecha de la última sincronización cuando los datos vienen de la caché;
+  /// null si vienen de la red.
+  final Rxn<DateTime> cacheDesde = Rxn<DateTime>();
+
   /// Cambia al limpiar: una respuesta que llega después se descarta.
   int _generacion = 0;
 
@@ -28,9 +33,7 @@ class EquiposController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    ever(_auth.estado, (EstadoAuth e) {
-      if (e == EstadoAuth.sinSesion) limpiar();
-    });
+    alCambiarSesion(_auth, alTerminar: limpiar);
   }
 
   /// Equipos que cumplen la búsqueda de texto (sin mirar el filtro de estado).
@@ -97,9 +100,12 @@ class EquiposController extends GetxController {
     try {
       final lista = await _repositorio.listarEquipos();
       if (generacion != _generacion) return;
-      equipos.assignAll(lista);
+      equipos.assignAll(lista.equipos);
+      cacheDesde.value = lista.desdeCache ? lista.sincronizadoEn : null;
       mensaje.value = null;
-      estado.value = lista.isEmpty ? EstadoEquipos.vacio : EstadoEquipos.exito;
+      estado.value = lista.equipos.isEmpty
+          ? EstadoEquipos.vacio
+          : EstadoEquipos.exito;
     } catch (e) {
       if (generacion != _generacion) return;
       mensaje.value = ApiException.desdeError(e).mensaje;
@@ -108,6 +114,11 @@ class EquiposController extends GetxController {
       }
     }
   }
+
+  /// Equipos de la lista actual cuyo id está en [ids]. Los ids que ya no
+  /// existen se omiten (quien los guarda los conserva).
+  List<Equipo> porIds(Set<int> ids) =>
+      equipos.where((e) => ids.contains(e.id)).toList();
 
   void buscar(String texto) => busqueda.value = texto;
 
@@ -118,12 +129,14 @@ class EquiposController extends GetxController {
     filtroEstado.value = null;
   }
 
-  /// Descarta todos los datos de la persona. Es el único lugar donde se hace.
+  /// Descarta de la memoria los datos de la persona; la caché en disco se
+  /// conserva.
   void limpiar() {
     _generacion++;
     equipos.clear();
     limpiarFiltros();
     mensaje.value = null;
+    cacheDesde.value = null;
     estado.value = EstadoEquipos.cargando;
   }
 }

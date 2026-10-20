@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 
 import '../controllers/equipos_controller.dart';
 import '../models/equipo.dart';
-import '../utils/rutas.dart';
-import '../widgets/indicador_estado.dart';
+import '../widgets/aviso_cache.dart';
+import '../widgets/tarjeta_equipo.dart';
 import '../widgets/vista_error.dart';
 import '../widgets/vista_vacia.dart';
 
@@ -57,6 +57,14 @@ class _PantallaEquiposState extends State<PantallaEquipos> {
             ),
           ),
           _FiltrosEstado(controlador: _controlador),
+          Obx(() {
+            final desde = _controlador.cacheDesde.value;
+            if (desde == null) return const SizedBox.shrink();
+            return AvisoCache(
+              desde: desde,
+              alReintentar: _controlador.refrescar,
+            );
+          }),
           Expanded(child: Obx(_cuerpo)),
         ],
       ),
@@ -117,7 +125,7 @@ class _PantallaEquiposState extends State<PantallaEquipos> {
                 );
               }
               final equipo = lista[indice - (aviso != null ? 1 : 0)];
-              return _TarjetaEquipo(equipo: equipo);
+              return TarjetaEquipo(equipo: equipo);
             },
           ),
         );
@@ -161,41 +169,6 @@ class _FiltrosEstado extends StatelessWidget {
           ],
         );
       }),
-    );
-  }
-}
-
-class _TarjetaEquipo extends StatelessWidget {
-  final Equipo equipo;
-
-  const _TarjetaEquipo({required this.equipo});
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => Get.toNamed(Rutas.detalleEquipo, arguments: equipo),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(equipo.codigoInventario, style: tema.textTheme.titleMedium),
-              const SizedBox(height: 4),
-              Text(
-                '${equipo.marca} ${equipo.modelo}',
-                style: tema.textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 4),
-              Text(equipo.sede, style: tema.textTheme.bodyMedium),
-              const SizedBox(height: 8),
-              IndicadorEstado(estado: equipo.estado),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

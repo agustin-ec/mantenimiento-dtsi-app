@@ -24,3 +24,10 @@ int? leerEntero(Object? valor) {
   if (valor is String) return int.tryParse(valor);
   return null;
 }
+
+/// Fecha y hora como dd/MM HH:mm (hora local), para avisos breves.
+String formatearFechaCorta(DateTime fecha) {
+  final f = fecha.toLocal();
+  String dos(int n) => n.toString().padLeft(2, '0');
+  return '${dos(f.day)}/${dos(f.month)} ${dos(f.hour)}:${dos(f.minute)}';
+}

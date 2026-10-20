@@ -3,20 +3,25 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:mantenimiento_dtsi/controllers/auth_controller.dart';
 import 'package:mantenimiento_dtsi/controllers/equipos_controller.dart';
+import 'package:mantenimiento_dtsi/controllers/favoritos_controller.dart';
 import 'package:mantenimiento_dtsi/models/equipo.dart';
 import 'package:mantenimiento_dtsi/screens/pantalla_equipos.dart';
 import 'package:mantenimiento_dtsi/services/api_exception.dart';
 import 'package:mantenimiento_dtsi/theme/tema_app.dart';
 
+import '../utils/almacen_favoritos_falso.dart';
 import '../utils/repositorio_equipos_falso.dart';
 import '../utils/repositorio_falso.dart';
 
 void main() {
   late RepositorioEquiposFalso repo;
+  late AlmacenFavoritosFalso almacen;
 
   Future<void> abrir(WidgetTester tester) async {
     final auth = Get.put(AuthController(RepositorioFalso(), navegar: (_) {}));
+    auth.usuario.value = usuarioPrueba;
     Get.put(EquiposController(repo, auth));
+    Get.put(FavoritosController(almacen, auth));
     await tester.pumpWidget(
       GetMaterialApp(theme: TemaApp.claro, home: const PantallaEquipos()),
     );
@@ -24,7 +29,10 @@ void main() {
     await tester.pump();
   }
 
-  setUp(() => repo = RepositorioEquiposFalso());
+  setUp(() {
+    repo = RepositorioEquiposFalso();
+    almacen = AlmacenFavoritosFalso();
+  });
   tearDown(Get.reset);
 
   testWidgets('muestra una tarjeta por equipo con sus datos', (tester) async {
@@ -118,5 +126,53 @@ void main() {
     expect(find.text('Todos (1)'), findsOneWidget);
     expect(find.text('Disponible (0)'), findsOneWidget);
     expect(find.text('Asignado (1)'), findsOneWidget);
+  });
+
+  testWidgets('la estrella marca y desmarca un favorito', (tester) async {
+    repo.equipos = [equipoPrueba(1)];
+    await abrir(tester);
+
+    expect(find.byIcon(Icons.star_border), findsOneWidget);
+    await tester.tap(find.byTooltip('Marcar como favorito'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byIcon(Icons.star), findsOneWidget);
+    expect(almacen.datos[usuarioPrueba.id], {1});
+
+    await tester.tap(find.byTooltip('Quitar de favoritos'));
+    await tester.pump();
+    await tester.pump();
+    expect(find.byIcon(Icons.star_border), findsOneWidget);
+    expect(almacen.datos[usuarioPrueba.id], isEmpty);
+  });
+
+  testWidgets('los datos de la caché muestran el aviso con la fecha', (
+    tester,
+  ) async {
+    repo.equipos = [equipoPrueba(1)];
+    repo.desdeCache = DateTime(2026, 10, 20, 14, 5);
+    await abrir(tester);
+
+    expect(
+      find.text(
+        'Sin conexión — datos guardados (última sincronización: 20/10 14:05)',
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(Card), findsOneWidget);
+
+    // «Reintentar» del aviso vuelve a pedir los datos; ya con red, desaparece.
+    repo.desdeCache = null;
+    await tester.tap(find.widgetWithText(TextButton, 'Reintentar'));
+    await tester.pump();
+    await tester.pump();
+    expect(repo.llamadas, ['listarEquipos', 'listarEquipos']);
+    expect(find.textContaining('Sin conexión'), findsNothing);
+  });
+
+  testWidgets('con datos frescos no hay aviso de caché', (tester) async {
+    repo.equipos = [equipoPrueba(1)];
+    await abrir(tester);
+    expect(find.textContaining('Sin conexión'), findsNothing);
   });
 }

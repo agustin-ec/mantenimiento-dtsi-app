@@ -46,17 +46,18 @@ void main() {
     expect(peticion.path, '/equipos/');
     expect(peticion.queryParameters, {'skip': 0, 'limit': 100});
     expect(peticion.headers['Authorization'], 'Bearer tok');
-    expect(equipos.single.estado, EstadoEquipo.asignado);
+    expect(equipos.desdeCache, isFalse);
+    expect(equipos.equipos.single.estado, EstadoEquipo.asignado);
   });
 
   test('listarEquipos con arreglo vacío devuelve lista vacía', () async {
     final adaptador = AdaptadorFalso((o) async => json(200, []));
-    expect(await crear(adaptador).listarEquipos(), isEmpty);
+    expect((await crear(adaptador).listarEquipos()).equipos, isEmpty);
   });
 
   test('listarEquipos ignora elementos que no son objetos', () async {
     final adaptador = AdaptadorFalso((o) async => json(200, [_equipo, 5]));
-    expect(await crear(adaptador).listarEquipos(), hasLength(1));
+    expect((await crear(adaptador).listarEquipos()).equipos, hasLength(1));
   });
 
   test('una respuesta que no es arreglo es un error genérico', () async {

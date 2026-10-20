@@ -103,6 +103,14 @@ class ApiException implements Exception {
         : 'Revisa los campos: $lista.';
   }
 
+  /// Fallo de red o del servidor (sin conexión, tiempo agotado o 5xx): los
+  /// únicos en los que tiene sentido usar datos guardados.
+  bool get permiteCache {
+    final codigo = codigoEstado;
+    if (codigo != null) return codigo >= 500;
+    return mensaje == mensajeSinConexion || mensaje == mensajeTiempoAgotado;
+  }
+
   @override
   String toString() => mensaje;
 }
