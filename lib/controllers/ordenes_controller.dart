@@ -94,6 +94,18 @@ class OrdenesController extends GetxController {
     if (indice >= 0) ordenes[indice] = orden;
   }
 
+  /// Quita una orden eliminada. Si la lista ya está en éxito la quita en su
+  /// sitio (y pasa a vacío si era la última); en cualquier otro estado vuelve
+  /// a cargar la lista completa.
+  void quitar(int id) {
+    if (estado.value != EstadosOrdenes.exito) {
+      unawaited(cargar());
+      return;
+    }
+    ordenes.removeWhere((o) => o.id == id);
+    if (ordenes.isEmpty) estado.value = EstadosOrdenes.vacio;
+  }
+
   /// Carga mostrando el indicador de progreso.
   Future<void> cargar() async {
     estado.value = EstadosOrdenes.cargando;

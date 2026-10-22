@@ -87,6 +87,16 @@ class OrdenRepository {
   Future<Orden> asignarTecnico(int id, int tecnicoId) =>
       _cambiarEstado(id, 'asignar', cuerpo: {'tecnico_id': tecnicoId});
 
+  /// Elimina (borrado lógico) una orden CREADA. El 204 llega sin cuerpo, así
+  /// que no se interpreta la respuesta. No se reintenta solo.
+  Future<void> eliminarOrden(int id) async {
+    try {
+      await _cliente.dio.delete('/mantenimientos/$id');
+    } catch (e) {
+      throw ApiException.desdeError(e);
+    }
+  }
+
   /// Técnicos activos para asignar (solo admin; otro rol recibe 403).
   Future<List<Tecnico>> listarTecnicos() async {
     try {

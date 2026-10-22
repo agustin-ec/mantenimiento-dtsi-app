@@ -45,7 +45,7 @@ enum EstadoOrden {
 }
 
 /// Cambios de estado que se pueden pedir desde el detalle de una orden.
-enum AccionOrden { iniciar, completar, cancelar, asignar }
+enum AccionOrden { iniciar, completar, cancelar, asignar, eliminar }
 
 /// Tipo de mantenimiento, según el enum TipoMantenimiento del backend.
 enum TipoMantenimiento {

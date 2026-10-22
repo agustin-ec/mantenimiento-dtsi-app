@@ -12,6 +12,7 @@ import '../utils/texto.dart';
 import '../widgets/dato_etiquetado.dart';
 import '../widgets/dialogo_cancelar_orden.dart';
 import '../widgets/dialogo_confirmacion.dart';
+import '../widgets/dialogo_eliminar_orden.dart';
 import '../widgets/hoja_asignar_tecnico.dart';
 import '../widgets/hoja_completar_orden.dart';
 import '../widgets/indicador_estado.dart';
@@ -96,6 +97,24 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     if (confirmado) await controlador.iniciar();
   }
 
+  /// Si la orden se eliminó (o ya no existía) cierra el detalle y avisa.
+  Future<void> _eliminar(
+    BuildContext context,
+    DetalleOrdenController controlador,
+  ) async {
+    final mensajero = ScaffoldMessenger.of(context);
+    final navegador = Navigator.of(context);
+    final resultado = await mostrarDialogoEliminarOrden(context, controlador);
+    final aviso = switch (resultado) {
+      ResultadoAccion.exito => 'Orden eliminada',
+      ResultadoAccion.noExiste => 'La orden ya no existe',
+      _ => null,
+    };
+    if (aviso == null) return;
+    navegador.pop();
+    mensajero.showSnackBar(SnackBar(content: Text(aviso)));
+  }
+
   Widget _barraAcciones(
     BuildContext context,
     DetalleOrdenController controlador,
@@ -103,6 +122,7 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     final acciones = [
       ...controlador.acciones,
       if (controlador.puedeAsignar) AccionOrden.asignar,
+      if (controlador.puedeEliminar) AccionOrden.eliminar,
     ];
     if (acciones.isEmpty) return const SizedBox.shrink();
     final habilitadas = controlador.accionesHabilitadas;
@@ -141,6 +161,13 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
                     ? 'Asignar técnico'
                     : 'Reasignar',
               ),
+            ),
+            AccionOrden.eliminar => TextButton(
+              style: TextButton.styleFrom(foregroundColor: colores.error),
+              onPressed: habilitadas
+                  ? () => _eliminar(context, controlador)
+                  : null,
+              child: contenido(accion, 'Eliminar orden'),
             ),
             AccionOrden.cancelar => OutlinedButton(
               style: OutlinedButton.styleFrom(foregroundColor: colores.error),

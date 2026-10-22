@@ -122,6 +122,17 @@ class RepositorioOrdenesFalso implements OrdenRepository {
   Future<Orden> cancelarOrden(int id, {required String motivo}) =>
       _accion('cancelarOrden', id, EstadoOrden.cancelada, {'motivo': motivo});
 
+  /// Ids que recibió [eliminarOrden].
+  final List<int> eliminadas = [];
+
+  @override
+  Future<void> eliminarOrden(int id) async {
+    llamadas.add('eliminarOrden:$id');
+    eliminadas.add(id);
+    if (esperaAccion != null) await esperaAccion!.future;
+    if (errorAccion != null) throw errorAccion!;
+  }
+
   /// Técnicos que devuelve [listarTecnicos].
   List<Tecnico> tecnicos = [];
   ApiException? errorTecnicos;
