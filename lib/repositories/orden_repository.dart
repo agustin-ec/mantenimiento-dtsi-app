@@ -2,7 +2,7 @@ import '../models/orden.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
 
-/// Lectura y creación de órdenes de mantenimiento. Los errores salen como
+/// Lectura, creación y cambios de estado de órdenes de mantenimiento. Los errores salen como
 /// [ApiException]. No hay caché: las órdenes siempre vienen del backend.
 class OrdenRepository {
   /// Máximo que permite el backend por petición. El contrato no devuelve
@@ -28,9 +28,7 @@ class OrdenRepository {
   Future<Orden> obtenerOrden(int id) async {
     try {
       final respuesta = await _cliente.dio.get('/mantenimientos/$id');
-      final datos = respuesta.data;
-      if (datos is! Map) throw const ApiException(ApiException.mensajeGenerico);
-      return Orden.fromJson(Map<String, dynamic>.from(datos));
+      return _orden(respuesta.data);
     } catch (e) {
       throw ApiException.desdeError(e);
     }
@@ -54,12 +52,56 @@ class OrdenRepository {
           'descripcion_problema': descripcion,
         },
       );
-      final datos = respuesta.data;
-      if (datos is! Map) throw const ApiException(ApiException.mensajeGenerico);
-      return Orden.fromJson(Map<String, dynamic>.from(datos));
+      return _orden(respuesta.data);
     } catch (e) {
       throw ApiException.desdeError(e);
     }
+  }
+
+  /// Pasa la orden a EN_PROCESO (y el equipo a EN_MANTENIMIENTO). Sin cuerpo.
+  Future<Orden> iniciarOrden(int id) => _cambiarEstado(id, 'iniciar');
+
+  /// Cierra la orden como COMPLETADA. Los repuestos son opcionales: si vienen
+  /// vacíos no se envían.
+  Future<Orden> completarOrden(
+    int id, {
+    required String diagnostico,
+    required String accionesRealizadas,
+    String? repuestosUtilizados,
+  }) => _cambiarEstado(
+    id,
+    'completar',
+    cuerpo: {
+      'diagnostico': diagnostico,
+      'acciones_realizadas': accionesRealizadas,
+      if (repuestosUtilizados != null && repuestosUtilizados.isNotEmpty)
+        'repuestos_utilizados': repuestosUtilizados,
+    },
+  );
+
+  Future<Orden> cancelarOrden(int id, {required String motivo}) =>
+      _cambiarEstado(id, 'cancelar', cuerpo: {'motivo_cancelacion': motivo});
+
+  /// Los PATCH de cambio de estado no se reintentan solos: no son idempotentes.
+  Future<Orden> _cambiarEstado(
+    int id,
+    String accion, {
+    Map<String, dynamic>? cuerpo,
+  }) async {
+    try {
+      final respuesta = await _cliente.dio.patch(
+        '/mantenimientos/$id/$accion',
+        data: cuerpo,
+      );
+      return _orden(respuesta.data);
+    } catch (e) {
+      throw ApiException.desdeError(e);
+    }
+  }
+
+  Orden _orden(Object? datos) {
+    if (datos is! Map) throw const ApiException(ApiException.mensajeGenerico);
+    return Orden.fromJson(Map<String, dynamic>.from(datos));
   }
 
   /// Los elementos que no son objetos JSON se ignoran.

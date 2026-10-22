@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/detalle_orden_controller.dart';
+import '../controllers/equipos_controller.dart';
 import '../controllers/ordenes_controller.dart';
 import '../models/orden.dart';
 import '../repositories/orden_repository.dart';
 import '../utils/texto.dart';
 import '../widgets/dato_etiquetado.dart';
+import '../widgets/dialogo_cancelar_orden.dart';
+import '../widgets/dialogo_confirmacion.dart';
+import '../widgets/hoja_completar_orden.dart';
 import '../widgets/indicador_estado.dart';
 import '../widgets/vista_vacia.dart';
 
@@ -32,7 +36,12 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     if (argumento is! Orden) return;
     _orden = argumento;
     _controlador = Get.put(
-      DetalleOrdenController(Get.find<OrdenRepository>(), argumento),
+      DetalleOrdenController(
+        Get.find<OrdenRepository>(),
+        argumento,
+        ordenes: Get.find<OrdenesController>(),
+        equipos: Get.find<EquiposController>(),
+      ),
       tag: '${argumento.id}',
     );
     WidgetsBinding.instance.addPostFrameCallback((_) => _controlador!.cargar());
@@ -64,6 +73,76 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
         onRefresh: controlador.cargar,
         child: Obx(() => _contenido(context, controlador)),
       ),
+      bottomNavigationBar: Obx(() => _barraAcciones(context, controlador)),
+    );
+  }
+
+  Future<void> _iniciar(DetalleOrdenController controlador) async {
+    final confirmado = await confirmarAccion(
+      context,
+      titulo: 'Iniciar orden',
+      mensaje:
+          'La orden pasará a «En proceso» y el equipo a «En mantenimiento». '
+          '¿Quieres continuar?',
+      textoConfirmar: 'Iniciar',
+    );
+    if (confirmado) await controlador.iniciar();
+  }
+
+  Widget _barraAcciones(
+    BuildContext context,
+    DetalleOrdenController controlador,
+  ) {
+    final acciones = controlador.acciones;
+    if (acciones.isEmpty) return const SizedBox.shrink();
+    final habilitadas = controlador.accionesHabilitadas;
+    final enCurso = controlador.accionEnCurso.value;
+    final colores = Theme.of(context).colorScheme;
+
+    Widget contenido(AccionOrden accion, String texto) => enCurso == accion
+        ? const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        : Text(texto);
+
+    final botones = <Widget>[
+      for (final accion in acciones)
+        Expanded(
+          child: switch (accion) {
+            AccionOrden.iniciar => FilledButton(
+              onPressed: habilitadas ? () => _iniciar(controlador) : null,
+              child: contenido(accion, 'Iniciar'),
+            ),
+            AccionOrden.completar => FilledButton(
+              onPressed: habilitadas
+                  ? () => mostrarHojaCompletarOrden(context, controlador)
+                  : null,
+              child: contenido(accion, 'Completar'),
+            ),
+            AccionOrden.cancelar => OutlinedButton(
+              style: OutlinedButton.styleFrom(foregroundColor: colores.error),
+              onPressed: habilitadas
+                  ? () => mostrarDialogoCancelarOrden(context, controlador)
+                  : null,
+              child: contenido(accion, 'Cancelar orden'),
+            ),
+          },
+        ),
+    ];
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Row(
+          children: [
+            for (var i = 0; i < botones.length; i++) ...[
+              if (i > 0) const SizedBox(width: 12),
+              botones[i],
+            ],
+          ],
+        ),
+      ),
     );
   }
 
@@ -72,6 +151,7 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     final orden = controlador.orden.value;
     final estado = controlador.estado.value;
     final aviso = controlador.mensaje.value;
+    final avisoAccion = controlador.mensajeAccion.value;
     String fecha(DateTime? f) => f == null ? '' : formatearFechaHora(f);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -81,6 +161,14 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
           const Padding(
             padding: EdgeInsets.only(bottom: 8),
             child: LinearProgressIndicator(),
+          ),
+        if (avisoAccion != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text(
+              avisoAccion,
+              style: TextStyle(color: tema.colorScheme.error),
+            ),
           ),
         if (estado == EstadoDetalleOrden.error && aviso != null)
           Padding(

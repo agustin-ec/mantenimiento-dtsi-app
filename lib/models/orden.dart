@@ -23,6 +23,15 @@ enum EstadoOrden {
     cancelada,
   ];
 
+  /// Acciones que ofrece la app según el estado. Solo guían la interfaz: el
+  /// servidor decide si la transición es válida. Con un estado que no se
+  /// reconoce no se ofrece ninguna.
+  List<AccionOrden> get accionesPermitidas => switch (this) {
+    creada || asignada => const [AccionOrden.iniciar, AccionOrden.cancelar],
+    enProceso => const [AccionOrden.completar, AccionOrden.cancelar],
+    completada || cancelada || desconocido => const [],
+  };
+
   /// Un valor ausente o que no se reconoce queda como [desconocido].
   static EstadoOrden desdeApi(Object? valor) {
     return filtrables.firstWhere(
@@ -31,6 +40,9 @@ enum EstadoOrden {
     );
   }
 }
+
+/// Cambios de estado que se pueden pedir desde el detalle de una orden.
+enum AccionOrden { iniciar, completar, cancelar }
 
 /// Tipo de mantenimiento, según el enum TipoMantenimiento del backend.
 enum TipoMantenimiento {

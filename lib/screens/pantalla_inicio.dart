@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import '../controllers/equipos_controller.dart';
 import 'pantalla_equipos.dart';
 import 'pantalla_mis_equipos.dart';
 import 'pantalla_ordenes.dart';
@@ -30,7 +32,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _indice,
-        onDestinationSelected: (i) => setState(() => _indice = i),
+        onDestinationSelected: (i) {
+          // «Equipos» y «Mis equipos» leen la lista de equipos en memoria.
+          if (i <= 1) Get.find<EquiposController>().actualizarSiHaceFalta();
+          setState(() => _indice = i);
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.precision_manufacturing_outlined),

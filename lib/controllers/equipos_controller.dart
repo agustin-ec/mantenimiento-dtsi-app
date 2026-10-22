@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../models/equipo.dart';
@@ -27,6 +29,11 @@ class EquiposController extends GetxController {
 
   /// Cambia al limpiar: una respuesta que llega después se descarta.
   int _generacion = 0;
+
+  /// Algo cambió en el servidor (p. ej. el estado de un equipo al cambiar una
+  /// orden) y la lista en memoria puede estar atrasada.
+  bool _desactualizado = false;
+  bool _actualizandoEnSegundoPlano = false;
 
   EquiposController(this._repositorio, this._auth);
 
@@ -103,6 +110,7 @@ class EquiposController extends GetxController {
       equipos.assignAll(lista.equipos);
       cacheDesde.value = lista.desdeCache ? lista.sincronizadoEn : null;
       mensaje.value = null;
+      _desactualizado = false;
       estado.value = lista.equipos.isEmpty
           ? EstadoEquipos.vacio
           : EstadoEquipos.exito;
@@ -112,6 +120,41 @@ class EquiposController extends GetxController {
       if (!(conservarDatos && equipos.isNotEmpty)) {
         estado.value = EstadoEquipos.error;
       }
+    }
+  }
+
+  /// Avisa de que los equipos pueden haber cambiado en el servidor y los
+  /// recarga en segundo plano.
+  void marcarDesactualizados() {
+    _desactualizado = true;
+    unawaited(actualizarEnSegundoPlano());
+  }
+
+  /// Reintenta en segundo plano si una recarga anterior no pudo completarse.
+  void actualizarSiHaceFalta() {
+    if (_desactualizado) unawaited(actualizarEnSegundoPlano());
+  }
+
+  /// Recarga sin tocar [estado] ni [mensaje] y sin mostrar errores: si falla,
+  /// o si solo hay datos de la caché, se conserva lo que hay en memoria.
+  Future<void> actualizarEnSegundoPlano() async {
+    if (_actualizandoEnSegundoPlano) return;
+    _actualizandoEnSegundoPlano = true;
+    final generacion = _generacion;
+    try {
+      final lista = await _repositorio.listarEquipos();
+      if (generacion != _generacion || lista.desdeCache) return;
+      equipos.assignAll(lista.equipos);
+      cacheDesde.value = null;
+      mensaje.value = null;
+      _desactualizado = false;
+      estado.value = lista.equipos.isEmpty
+          ? EstadoEquipos.vacio
+          : EstadoEquipos.exito;
+    } catch (_) {
+      // Es una mejora silenciosa: el usuario no debe ver este error.
+    } finally {
+      _actualizandoEnSegundoPlano = false;
     }
   }
 
@@ -141,6 +184,7 @@ class EquiposController extends GetxController {
   /// conserva.
   void limpiar() {
     _generacion++;
+    _desactualizado = false;
     equipos.clear();
     limpiarFiltros();
     mensaje.value = null;

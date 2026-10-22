@@ -82,6 +82,18 @@ class OrdenesController extends GetxController {
     estado.value = EstadosOrdenes.exito;
   }
 
+  /// Refleja el cambio de estado de una orden. Si la lista ya está en éxito
+  /// reemplaza esa orden en su sitio (si no está, no hace nada); en cualquier
+  /// otro estado vuelve a cargar la lista completa.
+  void actualizarOrden(Orden orden) {
+    if (estado.value != EstadosOrdenes.exito) {
+      unawaited(cargar());
+      return;
+    }
+    final indice = ordenes.indexWhere((o) => o.id == orden.id);
+    if (indice >= 0) ordenes[indice] = orden;
+  }
+
   /// Carga mostrando el indicador de progreso.
   Future<void> cargar() async {
     estado.value = EstadosOrdenes.cargando;

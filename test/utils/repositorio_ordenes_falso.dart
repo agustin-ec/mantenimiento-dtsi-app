@@ -40,6 +40,18 @@ class RepositorioOrdenesFalso implements OrdenRepository {
   /// envío en curso).
   Completer<void>? espera;
 
+  /// Orden que devuelven iniciar, completar y cancelar; si es null, una de
+  /// prueba con el estado que corresponde a la acción.
+  Orden? resultadoAccion;
+  ApiException? errorAccion;
+
+  /// Si se define, las acciones esperan a que se complete (para probar el
+  /// envío en curso).
+  Completer<void>? esperaAccion;
+
+  /// Argumentos de cada llamada a iniciar, completar o cancelar.
+  final List<Map<String, Object?>> cambiosEstado = [];
+
   /// Argumentos de cada llamada a [crearOrden].
   final List<Map<String, Object>> creaciones = [];
 
@@ -75,4 +87,37 @@ class RepositorioOrdenesFalso implements OrdenRepository {
     if (errorCrear != null) throw errorCrear!;
     return creada ?? ordenPrueba(100, equipoId: equipoId);
   }
+
+  Future<Orden> _accion(
+    String nombre,
+    int id,
+    EstadoOrden estadoNuevo, [
+    Map<String, Object?> datos = const {},
+  ]) async {
+    llamadas.add('$nombre:$id');
+    cambiosEstado.add({'accion': nombre, 'id': id, ...datos});
+    if (esperaAccion != null) await esperaAccion!.future;
+    if (errorAccion != null) throw errorAccion!;
+    return resultadoAccion ?? ordenPrueba(id, estado: estadoNuevo);
+  }
+
+  @override
+  Future<Orden> iniciarOrden(int id) =>
+      _accion('iniciarOrden', id, EstadoOrden.enProceso);
+
+  @override
+  Future<Orden> completarOrden(
+    int id, {
+    required String diagnostico,
+    required String accionesRealizadas,
+    String? repuestosUtilizados,
+  }) => _accion('completarOrden', id, EstadoOrden.completada, {
+    'diagnostico': diagnostico,
+    'accionesRealizadas': accionesRealizadas,
+    'repuestosUtilizados': repuestosUtilizados,
+  });
+
+  @override
+  Future<Orden> cancelarOrden(int id, {required String motivo}) =>
+      _accion('cancelarOrden', id, EstadoOrden.cancelada, {'motivo': motivo});
 }

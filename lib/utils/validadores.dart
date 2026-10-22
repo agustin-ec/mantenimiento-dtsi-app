@@ -26,13 +26,27 @@ class Validadores {
       valor == null ? 'Selecciona un equipo' : null;
 
   static const minimoDescripcion = 10;
+  static const minimoDiagnostico = 10;
+  static const minimoAcciones = 10;
+  static const minimoMotivo = 5;
 
-  static String? descripcionProblema(String? valor) {
+  static String? descripcionProblema(String? valor) =>
+      _textoMinimo(valor, 'Describe el problema', minimoDescripcion);
+
+  static String? diagnostico(String? valor) =>
+      _textoMinimo(valor, 'Describe el diagnóstico', minimoDiagnostico);
+
+  static String? accionesRealizadas(String? valor) =>
+      _textoMinimo(valor, 'Describe las acciones realizadas', minimoAcciones);
+
+  static String? motivoCancelacion(String? valor) =>
+      _textoMinimo(valor, 'Escribe el motivo de la cancelación', minimoMotivo);
+
+  /// Texto obligatorio con un mínimo de caracteres, contado ya recortado.
+  static String? _textoMinimo(String? valor, String vacio, int minimo) {
     final texto = valor?.trim() ?? '';
-    if (texto.isEmpty) return 'Describe el problema';
-    if (texto.length < minimoDescripcion) {
-      return 'Debe tener al menos $minimoDescripcion caracteres';
-    }
+    if (texto.isEmpty) return vacio;
+    if (texto.length < minimo) return 'Debe tener al menos $minimo caracteres';
     return null;
   }
 }
