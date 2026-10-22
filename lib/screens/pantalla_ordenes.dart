@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/ordenes_controller.dart';
 import '../models/orden.dart';
+import '../utils/rutas.dart';
 import '../widgets/chips_filtro_estado.dart';
 import '../widgets/tarjeta_orden.dart';
 import '../widgets/vista_error.dart';
@@ -26,10 +27,27 @@ class _PantallaOrdenesState extends State<PantallaOrdenes> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _controlador.cargar());
   }
 
+  Future<void> _nueva() async {
+    final resultado = await Get.toNamed(Rutas.nuevaOrden);
+    if (resultado is Orden && mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Orden creada')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Órdenes')),
+      appBar: AppBar(
+        title: const Text('Órdenes'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Nueva orden',
+            onPressed: _nueva,
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Obx(

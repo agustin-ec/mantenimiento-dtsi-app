@@ -13,6 +13,7 @@ import 'repositories/orden_repository.dart';
 import 'screens/pantalla_arranque.dart';
 import 'screens/pantalla_detalle_equipo.dart';
 import 'screens/pantalla_detalle_orden.dart';
+import 'screens/pantalla_formulario_orden.dart';
 import 'screens/pantalla_inicio.dart';
 import 'screens/pantalla_login.dart';
 import 'screens/pantalla_registro.dart';
@@ -87,6 +88,11 @@ class AplicacionDtsi extends StatelessWidget {
         GetPage(
           name: Rutas.detalleOrden,
           page: () => const PantallaDetalleOrden(),
+          middlewares: [MiddlewareAuth(requiereSesion: true)],
+        ),
+        GetPage(
+          name: Rutas.nuevaOrden,
+          page: () => const PantallaFormularioOrden(),
           middlewares: [MiddlewareAuth(requiereSesion: true)],
         ),
       ],

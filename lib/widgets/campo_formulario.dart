@@ -12,6 +12,9 @@ class CampoFormulario extends StatelessWidget {
   final TextInputAction accion;
   final VoidCallback? alEnviar;
 
+  /// Si es mayor que 1, el campo ocupa varias líneas.
+  final int lineas;
+
   const CampoFormulario({
     super.key,
     required this.controlador,
@@ -23,6 +26,7 @@ class CampoFormulario extends StatelessWidget {
     this.autocompletar,
     this.accion = TextInputAction.next,
     this.alEnviar,
+    this.lineas = 1,
   });
 
   @override
@@ -33,6 +37,8 @@ class CampoFormulario extends StatelessWidget {
       validator: validador,
       keyboardType: teclado,
       obscureText: oculto,
+      minLines: lineas,
+      maxLines: lineas,
       enabled: habilitado,
       autofillHints: autocompletar,
       textInputAction: accion,

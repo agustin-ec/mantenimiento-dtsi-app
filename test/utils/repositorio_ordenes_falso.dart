@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:mantenimiento_dtsi/models/orden.dart';
 import 'package:mantenimiento_dtsi/repositories/orden_repository.dart';
 import 'package:mantenimiento_dtsi/services/api_exception.dart';
@@ -30,6 +32,17 @@ class RepositorioOrdenesFalso implements OrdenRepository {
   ApiException? errorDetalle;
   final List<String> llamadas = [];
 
+  /// Orden que devuelve [crearOrden]; si es null, una de prueba con id 100.
+  Orden? creada;
+  ApiException? errorCrear;
+
+  /// Si se define, [crearOrden] espera a que se complete (para probar el
+  /// envío en curso).
+  Completer<void>? espera;
+
+  /// Argumentos de cada llamada a [crearOrden].
+  final List<Map<String, Object>> creaciones = [];
+
   @override
   Future<List<Orden>> listarOrdenes() async {
     llamadas.add('listarOrdenes');
@@ -42,5 +55,24 @@ class RepositorioOrdenesFalso implements OrdenRepository {
     llamadas.add('obtenerOrden:$id');
     if (errorDetalle != null) throw errorDetalle!;
     return detalle ?? ordenes.firstWhere((o) => o.id == id);
+  }
+
+  @override
+  Future<Orden> crearOrden({
+    required int equipoId,
+    required TipoMantenimiento tipo,
+    required PrioridadOrden prioridad,
+    required String descripcion,
+  }) async {
+    llamadas.add('crearOrden');
+    creaciones.add({
+      'equipoId': equipoId,
+      'tipo': tipo,
+      'prioridad': prioridad,
+      'descripcion': descripcion,
+    });
+    if (espera != null) await espera!.future;
+    if (errorCrear != null) throw errorCrear!;
+    return creada ?? ordenPrueba(100, equipoId: equipoId);
   }
 }

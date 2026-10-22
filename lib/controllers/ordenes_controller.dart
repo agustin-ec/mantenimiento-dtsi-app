@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../models/orden.dart';
@@ -62,6 +64,22 @@ class OrdenesController extends GetxController {
     if (equipo == null) return 'Equipo #$equipoId';
     return '${equipo.codigoInventario} · ${equipo.marca} ${equipo.modelo}'
         .trim();
+  }
+
+  /// Incorpora una orden recién creada. Si la lista ya está cargada (éxito o
+  /// vacío) se inserta la que devolvió el servidor; en cualquier otro estado
+  /// (cargando o error) no se inserta y se vuelve a cargar la lista completa.
+  void incorporarCreada(Orden orden) {
+    final estadoActual = estado.value;
+    if (estadoActual != EstadosOrdenes.exito &&
+        estadoActual != EstadosOrdenes.vacio) {
+      unawaited(cargar());
+      return;
+    }
+    ordenes.removeWhere((o) => o.id == orden.id);
+    ordenes.insert(0, orden);
+    mensaje.value = null;
+    estado.value = EstadosOrdenes.exito;
   }
 
   /// Carga mostrando el indicador de progreso.

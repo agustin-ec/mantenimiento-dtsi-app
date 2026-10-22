@@ -44,6 +44,10 @@ enum TipoMantenimiento {
 
   const TipoMantenimiento(this.valorApi, this.etiqueta);
 
+  /// Tipos que se pueden elegir al crear una orden (todos menos
+  /// [desconocido]).
+  static const seleccionables = [preventivo, correctivo, predictivo];
+
   static TipoMantenimiento desdeApi(Object? valor) {
     return values.firstWhere(
       (t) => t != desconocido && t.valorApi == valor?.toString(),
@@ -64,6 +68,10 @@ enum PrioridadOrden {
   final String etiqueta;
 
   const PrioridadOrden(this.valorApi, this.etiqueta);
+
+  /// Prioridades que se pueden elegir al crear una orden (todas menos
+  /// [desconocido]).
+  static const seleccionables = [baja, media, alta, critica];
 
   static PrioridadOrden desdeApi(Object? valor) {
     return values.firstWhere(
