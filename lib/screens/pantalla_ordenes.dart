@@ -35,6 +35,17 @@ class _PantallaOrdenesState extends State<PantallaOrdenes> {
     }
   }
 
+  /// Abre el detalle; si al volver trae un aviso (orden eliminada) lo muestra
+  /// aquí, cuando el detalle ya se cerró y esta lista sigue montada.
+  Future<void> _abrirDetalle(Orden orden) async {
+    final aviso = await Get.toNamed(Rutas.detalleOrden, arguments: orden);
+    if (aviso is String && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(aviso), duration: const Duration(seconds: 3)),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -122,6 +133,7 @@ class _PantallaOrdenesState extends State<PantallaOrdenes> {
               }
               return TarjetaOrden(
                 orden: lista[indice - (aviso != null ? 1 : 0)],
+                alTocar: _abrirDetalle,
               );
             },
           ),

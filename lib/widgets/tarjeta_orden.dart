@@ -11,7 +11,10 @@ import 'indicador_estado.dart';
 class TarjetaOrden extends StatelessWidget {
   final Orden orden;
 
-  const TarjetaOrden({super.key, required this.orden});
+  /// Si se indica, reemplaza la apertura del detalle por defecto.
+  final void Function(Orden orden)? alTocar;
+
+  const TarjetaOrden({super.key, required this.orden, this.alTocar});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +23,9 @@ class TarjetaOrden extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () => Get.toNamed(Rutas.detalleOrden, arguments: orden),
+        onTap: () => alTocar != null
+            ? alTocar!(orden)
+            : Get.toNamed(Rutas.detalleOrden, arguments: orden),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

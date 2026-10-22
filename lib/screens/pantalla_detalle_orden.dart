@@ -97,12 +97,12 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     if (confirmado) await controlador.iniciar();
   }
 
-  /// Si la orden se eliminó (o ya no existía) cierra el detalle y avisa.
+  /// Si la orden se eliminó (o ya no existía) cierra el detalle y devuelve el
+  /// aviso a la lista, que lo muestra cuando ya está de vuelta.
   Future<void> _eliminar(
     BuildContext context,
     DetalleOrdenController controlador,
   ) async {
-    final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
     final resultado = await mostrarDialogoEliminarOrden(context, controlador);
     final aviso = switch (resultado) {
@@ -111,8 +111,7 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
       _ => null,
     };
     if (aviso == null) return;
-    navegador.pop();
-    mensajero.showSnackBar(SnackBar(content: Text(aviso)));
+    navegador.pop(aviso);
   }
 
   Widget _barraAcciones(
