@@ -120,6 +120,14 @@ class EquiposController extends GetxController {
   List<Equipo> porIds(Set<int> ids) =>
       equipos.where((e) => ids.contains(e.id)).toList();
 
+  /// Equipo cargado con ese id; null si no está en la lista actual.
+  Equipo? porId(int id) {
+    for (final equipo in equipos) {
+      if (equipo.id == id) return equipo;
+    }
+    return null;
+  }
+
   void buscar(String texto) => busqueda.value = texto;
 
   void filtrarPorEstado(EstadoEquipo? nuevo) => filtroEstado.value = nuevo;

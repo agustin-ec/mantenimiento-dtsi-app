@@ -7,6 +7,7 @@ import '../models/evento_historial.dart';
 import '../repositories/equipo_repository.dart';
 import '../utils/texto.dart';
 import '../widgets/boton_seguimiento.dart';
+import '../widgets/dato_etiquetado.dart';
 import '../widgets/indicador_estado.dart';
 import '../widgets/vista_error.dart';
 import '../widgets/vista_vacia.dart';
@@ -89,14 +90,14 @@ class _PantallaDetalleEquipoState extends State<PantallaDetalleEquipo> {
         const SizedBox(height: 8),
         IndicadorEstado(estado: equipo.estado),
         const SizedBox(height: 16),
-        _Dato('Código de inventario', equipo.codigoInventario),
-        _Dato('Número de serie', equipo.numeroSerie),
-        _Dato('Tipo de equipo', equipo.tipoEquipo),
-        _Dato('Sede', equipo.sede),
-        _Dato('Ubicación', equipo.ubicacionDetallada),
-        _Dato('Especificaciones', equipo.especificaciones),
+        DatoEtiquetado('Código de inventario', equipo.codigoInventario),
+        DatoEtiquetado('Número de serie', equipo.numeroSerie),
+        DatoEtiquetado('Tipo de equipo', equipo.tipoEquipo),
+        DatoEtiquetado('Sede', equipo.sede),
+        DatoEtiquetado('Ubicación', equipo.ubicacionDetallada),
+        DatoEtiquetado('Especificaciones', equipo.especificaciones),
         if (equipo.actualizadoEn != null)
-          _Dato(
+          DatoEtiquetado(
             'Última actualización',
             formatearFechaHora(equipo.actualizadoEn!),
           ),
@@ -127,29 +128,6 @@ class _PantallaDetalleEquipoState extends State<PantallaDetalleEquipo> {
         else
           for (final evento in eventos) _TarjetaEvento(evento: evento),
       ],
-    );
-  }
-}
-
-class _Dato extends StatelessWidget {
-  final String etiqueta;
-  final String? valor;
-
-  const _Dato(this.etiqueta, this.valor);
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final texto = (valor == null || valor!.isEmpty) ? '—' : valor!;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(etiqueta, style: tema.textTheme.labelMedium),
-          Text(texto, style: tema.textTheme.bodyLarge),
-        ],
-      ),
     );
   }
 }
