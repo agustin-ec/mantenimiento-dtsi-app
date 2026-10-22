@@ -4,8 +4,10 @@ import '../models/orden.dart';
 import '../repositories/orden_repository.dart';
 import '../services/api_exception.dart';
 import '../utils/validadores.dart';
+import 'auth_controller.dart';
 import 'equipos_controller.dart';
 import 'ordenes_controller.dart';
+import 'tecnicos_controller.dart';
 
 enum EstadoDetalleOrden { cargando, exito, error }
 
@@ -16,11 +18,15 @@ enum ResultadoAccion { exito, rechazada, error }
 
 /// Detalle de una orden. Muestra de inmediato la que llega de la lista y la
 /// refresca con el backend; si el refresco falla, conserva lo que ya tenía.
-/// También cambia su estado (iniciar, completar y cancelar).
+/// También cambia su estado (iniciar, completar y cancelar) y asigna técnico.
 class DetalleOrdenController extends GetxController {
   final OrdenRepository _repositorio;
   final OrdenesController? _ordenes;
   final EquiposController? _equipos;
+  final AuthController? _auth;
+
+  /// Lista de técnicos en memoria, solo para mostrar nombres y elegir.
+  final TecnicosController? tecnicos;
 
   final Rx<Orden> orden;
   final estado = EstadoDetalleOrden.cargando.obs;
@@ -37,10 +43,18 @@ class DetalleOrdenController extends GetxController {
     Orden inicial, {
     this._ordenes,
     this._equipos,
+    this.tecnicos,
+    this._auth,
   }) : orden = inicial.obs;
 
   /// Acciones que el estado actual permite ofrecer.
   List<AccionOrden> get acciones => orden.value.estado.accionesPermitidas;
+
+  /// «Asignar técnico» solo para admin y con la orden CREADA o ASIGNADA. Guía
+  /// la interfaz: el servidor decide.
+  bool get puedeAsignar =>
+      (_auth?.usuario.value?.esAdmin ?? false) &&
+      orden.value.estado.permiteAsignar;
 
   /// Los botones se habilitan cuando no hay una acción en curso ni se está
   /// leyendo la orden (su estado podría ser viejo).
@@ -98,6 +112,14 @@ class DetalleOrdenController extends GetxController {
     );
   }
 
+  /// Asigna o reasigna el técnico. No cambia el equipo, así que no se marcan
+  /// equipos como desactualizados.
+  Future<ResultadoAccion> asignar(int tecnicoId) => _ejecutar(
+    AccionOrden.asignar,
+    () => _repositorio.asignarTecnico(orden.value.id, tecnicoId),
+    cambiaEquipo: false,
+  );
+
   Future<ResultadoAccion> _rechazarLocal(String mensajeValidacion) async {
     if (accionEnCurso.value == null) mensajeAccion.value = mensajeValidacion;
     return ResultadoAccion.error;
@@ -105,8 +127,9 @@ class DetalleOrdenController extends GetxController {
 
   Future<ResultadoAccion> _ejecutar(
     AccionOrden accion,
-    Future<Orden> Function() llamada,
-  ) async {
+    Future<Orden> Function() llamada, {
+    bool cambiaEquipo = true,
+  }) async {
     if (accionEnCurso.value != null) return ResultadoAccion.error;
     accionEnCurso.value = accion;
     mensajeAccion.value = null;
@@ -116,7 +139,7 @@ class DetalleOrdenController extends GetxController {
       mensaje.value = null;
       estado.value = EstadoDetalleOrden.exito;
       _ordenes?.actualizarOrden(nueva);
-      _equipos?.marcarDesactualizados();
+      if (cambiaEquipo) _equipos?.marcarDesactualizados();
       return ResultadoAccion.exito;
     } catch (e) {
       final error = ApiException.desdeError(e);

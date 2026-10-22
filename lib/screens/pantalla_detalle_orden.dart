@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/detalle_orden_controller.dart';
+import '../controllers/auth_controller.dart';
 import '../controllers/equipos_controller.dart';
 import '../controllers/ordenes_controller.dart';
+import '../controllers/tecnicos_controller.dart';
 import '../models/orden.dart';
 import '../repositories/orden_repository.dart';
 import '../utils/texto.dart';
 import '../widgets/dato_etiquetado.dart';
 import '../widgets/dialogo_cancelar_orden.dart';
 import '../widgets/dialogo_confirmacion.dart';
+import '../widgets/hoja_asignar_tecnico.dart';
 import '../widgets/hoja_completar_orden.dart';
 import '../widgets/indicador_estado.dart';
 import '../widgets/vista_vacia.dart';
@@ -41,6 +44,10 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
         argumento,
         ordenes: Get.find<OrdenesController>(),
         equipos: Get.find<EquiposController>(),
+        tecnicos: Get.isRegistered<TecnicosController>()
+            ? Get.find<TecnicosController>()
+            : null,
+        auth: Get.find<AuthController>(),
       ),
       tag: '${argumento.id}',
     );
@@ -93,7 +100,10 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
     BuildContext context,
     DetalleOrdenController controlador,
   ) {
-    final acciones = controlador.acciones;
+    final acciones = [
+      ...controlador.acciones,
+      if (controlador.puedeAsignar) AccionOrden.asignar,
+    ];
     if (acciones.isEmpty) return const SizedBox.shrink();
     final habilitadas = controlador.accionesHabilitadas;
     final enCurso = controlador.accionEnCurso.value;
@@ -120,6 +130,17 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
                   ? () => mostrarHojaCompletarOrden(context, controlador)
                   : null,
               child: contenido(accion, 'Completar'),
+            ),
+            AccionOrden.asignar => OutlinedButton(
+              onPressed: habilitadas
+                  ? () => mostrarHojaAsignarTecnico(context, controlador)
+                  : null,
+              child: contenido(
+                accion,
+                controlador.orden.value.tecnicoId == null
+                    ? 'Asignar técnico'
+                    : 'Reasignar',
+              ),
             ),
             AccionOrden.cancelar => OutlinedButton(
               style: OutlinedButton.styleFrom(foregroundColor: colores.error),
@@ -203,7 +224,8 @@ class _PantallaDetalleOrdenState extends State<PantallaDetalleOrden> {
           'Técnico',
           orden.tecnicoId == null
               ? 'Sin asignar'
-              : 'Persona #${orden.tecnicoId}',
+              : controlador.tecnicos?.nombrePara(orden.tecnicoId) ??
+                    'Técnico #${orden.tecnicoId}',
         ),
         DatoEtiquetado('Descripción del problema', orden.descripcionProblema),
         DatoEtiquetado('Diagnóstico', orden.diagnostico),

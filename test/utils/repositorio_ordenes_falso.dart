@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:mantenimiento_dtsi/models/orden.dart';
+import 'package:mantenimiento_dtsi/models/tecnico.dart';
 import 'package:mantenimiento_dtsi/repositories/orden_repository.dart';
 import 'package:mantenimiento_dtsi/services/api_exception.dart';
 
@@ -120,4 +121,27 @@ class RepositorioOrdenesFalso implements OrdenRepository {
   @override
   Future<Orden> cancelarOrden(int id, {required String motivo}) =>
       _accion('cancelarOrden', id, EstadoOrden.cancelada, {'motivo': motivo});
+
+  /// Técnicos que devuelve [listarTecnicos].
+  List<Tecnico> tecnicos = [];
+  ApiException? errorTecnicos;
+
+  /// Si se define, [listarTecnicos] espera a que se complete.
+  Completer<void>? esperaTecnicos;
+
+  @override
+  Future<List<Tecnico>> listarTecnicos() async {
+    llamadas.add('listarTecnicos');
+    if (esperaTecnicos != null) await esperaTecnicos!.future;
+    if (errorTecnicos != null) throw errorTecnicos!;
+    return List.of(tecnicos);
+  }
+
+  @override
+  Future<Orden> asignarTecnico(int id, int tecnicoId) => _accion(
+    'asignarTecnico',
+    id,
+    EstadoOrden.asignada,
+    {'tecnicoId': tecnicoId},
+  );
 }

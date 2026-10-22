@@ -1,4 +1,5 @@
 import '../models/orden.dart';
+import '../models/tecnico.dart';
 import '../services/api_client.dart';
 import '../services/api_exception.dart';
 
@@ -81,6 +82,20 @@ class OrdenRepository {
 
   Future<Orden> cancelarOrden(int id, {required String motivo}) =>
       _cambiarEstado(id, 'cancelar', cuerpo: {'motivo_cancelacion': motivo});
+
+  /// Asigna o reasigna el técnico; la orden queda ASIGNADA.
+  Future<Orden> asignarTecnico(int id, int tecnicoId) =>
+      _cambiarEstado(id, 'asignar', cuerpo: {'tecnico_id': tecnicoId});
+
+  /// Técnicos activos para asignar (solo admin; otro rol recibe 403).
+  Future<List<Tecnico>> listarTecnicos() async {
+    try {
+      final respuesta = await _cliente.dio.get('/usuarios/tecnicos');
+      return _mapas(respuesta.data).map(Tecnico.fromJson).toList();
+    } catch (e) {
+      throw ApiException.desdeError(e);
+    }
+  }
 
   /// Los PATCH de cambio de estado no se reintentan solos: no son idempotentes.
   Future<Orden> _cambiarEstado(

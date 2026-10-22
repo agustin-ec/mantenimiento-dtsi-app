@@ -6,6 +6,7 @@ import 'controllers/auth_controller.dart';
 import 'controllers/equipos_controller.dart';
 import 'controllers/ordenes_controller.dart';
 import 'controllers/seguimiento_controller.dart';
+import 'controllers/tecnicos_controller.dart';
 import 'controllers/tema_controller.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/equipo_repository.dart';
@@ -45,6 +46,7 @@ Future<void> main() async {
   final equiposController = Get.put(EquiposController(equipos, auth));
   final ordenes = Get.put<OrdenRepository>(OrdenRepository(cliente));
   Get.put(OrdenesController(ordenes, auth, equipos: equiposController));
+  Get.put(TecnicosController(ordenes, auth));
   Get.put(SeguimientoController(AlmacenSeguimiento(), auth));
 
   runApp(AplicacionDtsi(modoInicial: temaController.modo.value));

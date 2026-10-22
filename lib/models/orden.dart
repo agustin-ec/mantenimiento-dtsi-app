@@ -32,6 +32,9 @@ enum EstadoOrden {
     completada || cancelada || desconocido => const [],
   };
 
+  /// Solo en estos estados se puede asignar o reasignar un técnico.
+  bool get permiteAsignar => this == creada || this == asignada;
+
   /// Un valor ausente o que no se reconoce queda como [desconocido].
   static EstadoOrden desdeApi(Object? valor) {
     return filtrables.firstWhere(
@@ -42,7 +45,7 @@ enum EstadoOrden {
 }
 
 /// Cambios de estado que se pueden pedir desde el detalle de una orden.
-enum AccionOrden { iniciar, completar, cancelar }
+enum AccionOrden { iniciar, completar, cancelar, asignar }
 
 /// Tipo de mantenimiento, según el enum TipoMantenimiento del backend.
 enum TipoMantenimiento {
