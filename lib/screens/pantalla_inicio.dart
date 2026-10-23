@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../controllers/equipos_controller.dart';
+import 'pantalla_asistente.dart';
 import 'pantalla_equipos.dart';
 import 'pantalla_mis_equipos.dart';
 import 'pantalla_ordenes.dart';
 import 'pantalla_perfil.dart';
 
-/// Pantalla protegida con la barra inferior «Equipos», «Mis equipos», «Órdenes» y «Perfil».
+/// Pantalla protegida con la barra inferior «Equipos», «Mis equipos», «Órdenes»,
+/// «Asistente» y «Perfil».
 class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
 
@@ -27,6 +29,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
           PantallaEquipos(),
           PantallaMisEquipos(),
           PantallaOrdenes(),
+          PantallaAsistente(),
           PantallaPerfil(),
         ],
       ),
@@ -52,6 +55,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
             icon: Icon(Icons.assignment_outlined),
             selectedIcon: Icon(Icons.assignment),
             label: 'Órdenes',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.smart_toy_outlined),
+            selectedIcon: Icon(Icons.smart_toy),
+            label: 'Asistente',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
