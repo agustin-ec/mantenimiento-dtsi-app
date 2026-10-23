@@ -4,12 +4,17 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/equipos_controller.dart';
+import 'controllers/ordenes_controller.dart';
 import 'controllers/seguimiento_controller.dart';
+import 'controllers/tecnicos_controller.dart';
 import 'controllers/tema_controller.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/equipo_repository.dart';
+import 'repositories/orden_repository.dart';
 import 'screens/pantalla_arranque.dart';
 import 'screens/pantalla_detalle_equipo.dart';
+import 'screens/pantalla_detalle_orden.dart';
+import 'screens/pantalla_formulario_orden.dart';
 import 'screens/pantalla_inicio.dart';
 import 'screens/pantalla_login.dart';
 import 'screens/pantalla_registro.dart';
@@ -38,7 +43,10 @@ Future<void> main() async {
       idUsuario: () => auth.usuario.value?.id,
     ),
   );
-  Get.put(EquiposController(equipos, auth));
+  final equiposController = Get.put(EquiposController(equipos, auth));
+  final ordenes = Get.put<OrdenRepository>(OrdenRepository(cliente));
+  Get.put(OrdenesController(ordenes, auth, equipos: equiposController));
+  Get.put(TecnicosController(ordenes, auth));
   Get.put(SeguimientoController(AlmacenSeguimiento(), auth));
 
   runApp(AplicacionDtsi(modoInicial: temaController.modo.value));
@@ -77,6 +85,16 @@ class AplicacionDtsi extends StatelessWidget {
         GetPage(
           name: Rutas.detalleEquipo,
           page: () => const PantallaDetalleEquipo(),
+          middlewares: [MiddlewareAuth(requiereSesion: true)],
+        ),
+        GetPage(
+          name: Rutas.detalleOrden,
+          page: () => const PantallaDetalleOrden(),
+          middlewares: [MiddlewareAuth(requiereSesion: true)],
+        ),
+        GetPage(
+          name: Rutas.nuevaOrden,
+          page: () => const PantallaFormularioOrden(),
           middlewares: [MiddlewareAuth(requiereSesion: true)],
         ),
       ],

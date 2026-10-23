@@ -30,6 +30,9 @@ class Usuario {
     );
   }
 
+  /// Solo guía la interfaz: el servidor decide los permisos reales.
+  bool get esAdmin => rol == 'admin';
+
   String get rolLegible => switch (rol) {
     'admin' => 'Administrador',
     'tecnico' => 'Técnico',

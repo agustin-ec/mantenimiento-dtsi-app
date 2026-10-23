@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../controllers/equipos_controller.dart';
 import '../models/equipo.dart';
 import '../widgets/aviso_cache.dart';
+import '../widgets/chips_filtro_estado.dart';
 import '../widgets/tarjeta_equipo.dart';
 import '../widgets/vista_error.dart';
 import '../widgets/vista_vacia.dart';
@@ -56,7 +57,16 @@ class _PantallaEquiposState extends State<PantallaEquipos> {
               ),
             ),
           ),
-          _FiltrosEstado(controlador: _controlador),
+          Obx(
+            () => ChipsFiltroEstado<EstadoEquipo>(
+              estados: EstadoEquipo.filtrables,
+              etiqueta: (estado) => estado.etiqueta,
+              conteo: _controlador.conteoPorEstado,
+              total: _controlador.totalCoincidencias,
+              actual: _controlador.filtroEstado.value,
+              alSeleccionar: _controlador.filtrarPorEstado,
+            ),
+          ),
           Obx(() {
             final desde = _controlador.cacheDesde.value;
             if (desde == null) return const SizedBox.shrink();
@@ -130,45 +140,5 @@ class _PantallaEquiposState extends State<PantallaEquipos> {
           ),
         );
     }
-  }
-}
-
-class _FiltrosEstado extends StatelessWidget {
-  final EquiposController controlador;
-
-  const _FiltrosEstado({required this.controlador});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 56,
-      child: Obx(() {
-        final actual = controlador.filtroEstado.value;
-        final conteo = controlador.conteoPorEstado;
-        return ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                label: Text('Todos (${controlador.totalCoincidencias})'),
-                selected: actual == null,
-                onSelected: (_) => controlador.filtrarPorEstado(null),
-              ),
-            ),
-            for (final estado in EstadoEquipo.filtrables)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text('${estado.etiqueta} (${conteo[estado] ?? 0})'),
-                  selected: actual == estado,
-                  onSelected: (_) => controlador.filtrarPorEstado(estado),
-                ),
-              ),
-          ],
-        );
-      }),
-    );
   }
 }
