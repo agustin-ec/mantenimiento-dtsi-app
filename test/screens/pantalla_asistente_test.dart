@@ -18,7 +18,7 @@ void main() {
   late RepositorioAsistenteFalso repo;
 
   const ejemploMantenimiento = '¿Cuántos equipos hay en mantenimiento?';
-  const ejemploProceso = '¿Qué órdenes están en proceso?';
+  const ejemploProceso = '¿Cuántas órdenes hay en proceso?';
   const ejemploDisponibles = '¿Cuántos equipos están disponibles?';
   const textoPensando = 'El asistente está escribiendo…';
 

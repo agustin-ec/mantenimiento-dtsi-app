@@ -16,7 +16,7 @@ class PantallaAsistente extends StatefulWidget {
 class _PantallaAsistenteState extends State<PantallaAsistente> {
   static const _ejemplos = [
     '¿Cuántos equipos hay en mantenimiento?',
-    '¿Qué órdenes están en proceso?',
+    '¿Cuántas órdenes hay en proceso?',
     '¿Cuántos equipos están disponibles?',
   ];
 
