@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'controllers/asistente_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/equipos_controller.dart';
 import 'controllers/ordenes_controller.dart';
 import 'controllers/seguimiento_controller.dart';
 import 'controllers/tecnicos_controller.dart';
 import 'controllers/tema_controller.dart';
+import 'repositories/asistente_repository.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/equipo_repository.dart';
 import 'repositories/orden_repository.dart';
@@ -48,6 +50,7 @@ Future<void> main() async {
   Get.put(OrdenesController(ordenes, auth, equipos: equiposController));
   Get.put(TecnicosController(ordenes, auth));
   Get.put(SeguimientoController(AlmacenSeguimiento(), auth));
+  Get.put(AsistenteController(AsistenteRepository(cliente), auth));
 
   runApp(AplicacionDtsi(modoInicial: temaController.modo.value));
 }
