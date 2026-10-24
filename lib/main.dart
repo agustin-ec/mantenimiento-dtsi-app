@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'controllers/asistente_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'controllers/equipos_controller.dart';
+import 'controllers/notificaciones_controller.dart';
 import 'controllers/ordenes_controller.dart';
 import 'controllers/seguimiento_controller.dart';
 import 'controllers/tecnicos_controller.dart';
@@ -24,6 +25,7 @@ import 'services/almacen_token.dart';
 import 'services/almacen_seguimiento.dart';
 import 'services/api_client.dart';
 import 'services/cache_equipos.dart';
+import 'services/servicio_notificaciones.dart';
 import 'theme/tema_app.dart';
 import 'utils/middleware_auth.dart';
 import 'utils/rutas.dart';
@@ -37,6 +39,12 @@ Future<void> main() async {
   final cliente = ApiClient(almacen: AlmacenToken());
   final auth = Get.put(AuthController(AuthRepository(cliente)));
   cliente.alCaducarSesion = auth.alCaducarSesion;
+
+  // Solo prepara el canal; el permiso se pide después de iniciar sesión.
+  final notificaciones = ServicioNotificacionesLocales();
+  await notificaciones.iniciar();
+  Get.put<ServicioNotificaciones>(notificaciones);
+  Get.put(NotificacionesController(notificaciones, auth, caja));
 
   final equipos = Get.put<EquipoRepository>(
     EquipoRepository(
