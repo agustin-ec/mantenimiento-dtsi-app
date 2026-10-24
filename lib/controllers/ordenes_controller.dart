@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../models/orden.dart';
 import '../repositories/orden_repository.dart';
 import '../services/api_exception.dart';
+import '../services/avisos_ordenes.dart';
 import '../utils/sesion.dart';
 import 'auth_controller.dart';
 import 'equipos_controller.dart';
@@ -17,6 +18,7 @@ class OrdenesController extends GetxController {
   final OrdenRepository _repositorio;
   final AuthController _auth;
   final EquiposController? _equipos;
+  final AvisosOrdenes? _avisos;
 
   final estado = EstadosOrdenes.cargando.obs;
   final ordenes = <Orden>[].obs;
@@ -26,7 +28,20 @@ class OrdenesController extends GetxController {
   /// Cambia al limpiar: una respuesta que llega después se descarta.
   int _generacion = 0;
 
-  OrdenesController(this._repositorio, this._auth, {this._equipos});
+  /// Sube con cada acción de la propia persona (crear, cambiar estado,
+  /// eliminar): una respuesta que estaba en camino se ve «vieja» y no se
+  /// compara para avisar.
+  int _accionesPropias = 0;
+
+  /// Cargas en curso; el refresco silencioso no se solapa con ellas.
+  int _cargasEnCurso = 0;
+
+  OrdenesController(
+    this._repositorio,
+    this._auth, {
+    this._equipos,
+    this._avisos,
+  });
 
   @override
   void onInit() {
@@ -70,6 +85,7 @@ class OrdenesController extends GetxController {
   /// vacío) se inserta la que devolvió el servidor; en cualquier otro estado
   /// (cargando o error) no se inserta y se vuelve a cargar la lista completa.
   void incorporarCreada(Orden orden) {
+    _registrarPropia(orden);
     final estadoActual = estado.value;
     if (estadoActual != EstadosOrdenes.exito &&
         estadoActual != EstadosOrdenes.vacio) {
@@ -86,6 +102,7 @@ class OrdenesController extends GetxController {
   /// reemplaza esa orden en su sitio (si no está, no hace nada); en cualquier
   /// otro estado vuelve a cargar la lista completa.
   void actualizarOrden(Orden orden) {
+    _registrarPropia(orden);
     if (estado.value != EstadosOrdenes.exito) {
       unawaited(cargar());
       return;
@@ -98,6 +115,8 @@ class OrdenesController extends GetxController {
   /// sitio (y pasa a vacío si era la última); en cualquier otro estado vuelve
   /// a cargar la lista completa.
   void quitar(int id) {
+    _accionesPropias++;
+    _avisos?.olvidar(id);
     if (estado.value != EstadosOrdenes.exito) {
       unawaited(cargar());
       return;
@@ -113,12 +132,29 @@ class OrdenesController extends GetxController {
     await _traer();
   }
 
+  void _registrarPropia(Orden orden) {
+    _accionesPropias++;
+    _avisos?.registrarPropia(orden);
+  }
+
   /// Recarga sin volver al indicador de progreso (arrastrar para refrescar).
   /// Si falla y ya había datos, los conserva y deja el mensaje.
   Future<void> refrescar() => _traer(conservarDatos: true);
 
-  Future<void> _traer({bool conservarDatos = false}) async {
+  /// Recarga periódica: no muestra errores, no toca el estado ni la lista si
+  /// falla, y no se solapa con otra carga.
+  Future<void> refrescarEnSilencio() {
+    if (_cargasEnCurso > 0) return Future.value();
+    return _traer(conservarDatos: true, silencioso: true);
+  }
+
+  Future<void> _traer({
+    bool conservarDatos = false,
+    bool silencioso = false,
+  }) async {
     final generacion = _generacion;
+    final acciones = _accionesPropias;
+    _cargasEnCurso++;
     try {
       final lista = await _repositorio.listarOrdenes();
       if (generacion != _generacion) return;
@@ -135,12 +171,24 @@ class OrdenesController extends GetxController {
       estado.value = lista.isEmpty
           ? EstadosOrdenes.vacio
           : EstadosOrdenes.exito;
+      if (acciones == _accionesPropias) await _compararParaAvisar(lista);
     } catch (e) {
-      if (generacion != _generacion) return;
+      if (generacion != _generacion || silencioso) return;
       mensaje.value = ApiException.desdeError(e).mensaje;
       if (!(conservarDatos && ordenes.isNotEmpty)) {
         estado.value = EstadosOrdenes.error;
       }
+    } finally {
+      _cargasEnCurso--;
+    }
+  }
+
+  /// Un fallo al comparar o avisar nunca convierte la carga en un error.
+  Future<void> _compararParaAvisar(List<Orden> lista) async {
+    try {
+      await _avisos?.alCargar(lista);
+    } catch (_) {
+      // El mapa se queda como estaba y se reintenta en la siguiente carga.
     }
   }
 
@@ -151,6 +199,7 @@ class OrdenesController extends GetxController {
   /// Descarta de la memoria los datos de la persona.
   void limpiar() {
     _generacion++;
+    _avisos?.limpiar();
     ordenes.clear();
     limpiarFiltros();
     mensaje.value = null;
