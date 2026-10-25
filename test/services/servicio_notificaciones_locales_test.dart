@@ -51,6 +51,13 @@ void main() {
     expect(argumentos['importance'], Importance.high.value);
   });
 
+  test('iniciar usa el icono monocromático de notificaciones', () async {
+    await ServicioNotificacionesLocales().iniciar();
+
+    final argumentos = de('initialize').single.arguments as Map;
+    expect(argumentos['defaultIcon'], 'ic_stat_notificacion');
+  });
+
   test('un fallo del plugin al iniciar no lanza', () async {
     respuestas['initialize'] = PlatformException(code: 'fallo');
 
