@@ -21,21 +21,20 @@ App móvil Flutter para la gestión de mantenimiento de equipos de la DTSI de la
 
 ### Capturas de pantalla
 
-![Pantalla de inicio de sesión](docs/capturas/01-inicio-sesion.png)
-
-Inicio de sesión en tema oscuro, con los campos Correo y Contraseña, el botón «Iniciar sesión» y el enlace «¿No tienes cuenta? Regístrate».
-
-![Lista de equipos](docs/capturas/02-equipos.png)
-
-Lista de equipos con buscador, filtros por estado y tarjetas con código, modelo, sede y estado; abajo, la barra con cinco pestañas.
-
-![Lista de órdenes](docs/capturas/03-ordenes.png)
-
-Lista de órdenes con filtros por estado, botón «+» y tarjetas con código de orden, equipo, descripción, estado, prioridad y fecha.
-
-![Chat del asistente](docs/capturas/04-asistente.png)
-
-Chat del asistente con la pregunta «¿Cuántas órdenes hay en proceso?» y la respuesta «Hay 3 órdenes en proceso.», y el campo «Escribe tu pregunta» con contador de 300 caracteres.
+<table>
+  <tr>
+    <td align="center"><img src="docs/capturas/01-inicio-sesion.png" width="200" alt="Pantalla de inicio de sesión"></td>
+    <td align="center"><img src="docs/capturas/02-equipos.png" width="200" alt="Lista de equipos"></td>
+    <td align="center"><img src="docs/capturas/03-ordenes.png" width="200" alt="Lista de órdenes"></td>
+    <td align="center"><img src="docs/capturas/04-asistente.png" width="200" alt="Chat del asistente"></td>
+  </tr>
+  <tr>
+    <td valign="top">Inicio de sesión en tema oscuro, con los campos Correo y Contraseña, el botón «Iniciar sesión» y el enlace «¿No tienes cuenta? Regístrate».</td>
+    <td valign="top">Lista de equipos con buscador, filtros por estado y tarjetas con código, modelo, sede y estado; abajo, la barra con cinco pestañas.</td>
+    <td valign="top">Lista de órdenes con filtros por estado, botón «+» y tarjetas con código de orden, equipo, descripción, estado, prioridad y fecha.</td>
+    <td valign="top">Chat del asistente con la pregunta «¿Cuántas órdenes hay en proceso?» y la respuesta «Hay 3 órdenes en proceso.», y el campo «Escribe tu pregunta» con contador de 300 caracteres.</td>
+  </tr>
+</table>
 
 ## 2. Arquitectura
 
