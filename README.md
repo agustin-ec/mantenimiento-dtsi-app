@@ -19,6 +19,24 @@ App móvil Flutter para la gestión de mantenimiento de equipos de la DTSI de la
 | Notificaciones locales | Avisos cuando cambia el estado de las órdenes en las que la persona es solicitante o técnico. |
 | Perfil | Datos de la persona, selector de tema (sistema, claro u oscuro) y cierre de sesión. |
 
+### Capturas de pantalla
+
+![Pantalla de inicio de sesión](docs/capturas/01-inicio-sesion.png)
+
+Inicio de sesión en tema oscuro, con los campos Correo y Contraseña, el botón «Iniciar sesión» y el enlace «¿No tienes cuenta? Regístrate».
+
+![Lista de equipos](docs/capturas/02-equipos.png)
+
+Lista de equipos con buscador, filtros por estado y tarjetas con código, modelo, sede y estado; abajo, la barra con cinco pestañas.
+
+![Lista de órdenes](docs/capturas/03-ordenes.png)
+
+Lista de órdenes con filtros por estado, botón «+» y tarjetas con código de orden, equipo, descripción, estado, prioridad y fecha.
+
+![Chat del asistente](docs/capturas/04-asistente.png)
+
+Chat del asistente con la pregunta «¿Cuántas órdenes hay en proceso?» y la respuesta «Hay 3 órdenes en proceso.», y el campo «Escribe tu pregunta» con contador de 300 caracteres.
+
 ## 2. Arquitectura
 
 ```mermaid
@@ -44,6 +62,13 @@ Las pantallas no llaman a la red ni a Hive directamente: todo pasa por los contr
 | `models/` | Modelos de datos: equipo, orden, usuario, técnico, evento de historial, mensaje del asistente. |
 | `theme/` | Tema claro y oscuro. |
 | `utils/` | Rutas, protección de rutas, sesión, validadores y utilidades de texto. |
+
+### Decisiones técnicas
+
+| ELEGÍ | DESCARTÉ | POR QUÉ |
+|---|---|---|
+| Consumir el asistente de IA a través del backend (`POST /asistente/preguntar`). | Guardar la clave del modelo dentro de la app o pedírsela a cada persona. | Una clave dentro de un APK puede extraerse; en el servidor queda protegida. |
+| Usar la caché de equipos solo ante fallos de red y errores 5xx (`ApiException.permiteCache`). | Usar la caché con cualquier error. | Con 401, 404 o 422 el problema no es la red y mostrar datos viejos engañaría. |
 
 ## 3. Requisitos y cómo ejecutarla
 
